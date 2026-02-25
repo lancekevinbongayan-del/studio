@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, Suspense } from 'react';
@@ -12,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Chrome, Loader2, Mail } from 'lucide-react';
 import { useAuth, useFirestore } from '@/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 function LoginForm() {
@@ -47,7 +48,6 @@ function LoginForm() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Check user profile in Firestore
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       
       if (userDoc.exists()) {
@@ -62,6 +62,17 @@ function LoginForm() {
           return;
         }
 
+        // Create a real-time session record
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        setDoc(doc(db, 'user_sessions', user.uid), {
+          userId: user.uid,
+          email: user.email,
+          fullName: userData.fullName || 'Anonymous',
+          loginTime: new Date().toISOString(),
+          deviceType: isMobile ? 'Mobile' : 'Desktop',
+          lastActive: serverTimestamp()
+        });
+
         toast({
           title: "Welcome Back",
           description: `Logged in as ${userData.fullName}`,
@@ -69,7 +80,6 @@ function LoginForm() {
         
         router.push(userData.role === 'Admin' ? '/admin' : '/visitor');
       } else {
-        // If profile doesn't exist, create it as a visitor by default
         router.push('/visitor');
       }
     } catch (error: any) {
@@ -143,32 +153,9 @@ function LoginForm() {
               )}
               {loading ? "Authenticating..." : "Sign in"}
             </Button>
-            
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t"></span>
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Or</span>
-              </div>
-            </div>
-
-            <Button 
-              type="button" 
-              variant="outline"
-              className="w-full h-11 text-lg gap-2" 
-              disabled={loading}
-              onClick={() => toast({ title: "Feature coming soon", description: "Google SSO is being configured." })}
-            >
-              <Chrome className="h-5 w-5" />
-              Sign in with Google
-            </Button>
           </form>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
-          <p className="text-xs text-center text-muted-foreground italic">
-            * Authorized access only. Your activity is logged.
-          </p>
           {roleHint === 'admin' && (
             <div className="text-sm text-center">
               New Admin? <Link href="/admin/register" className="text-primary hover:underline font-bold">Register here</Link>

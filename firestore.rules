@@ -1,123 +1,44 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * LIBTRACK ANALYTICS SECURITY RULES
-     *
-     * CORE PHILOSOPHY:
-     * This ruleset implements a dual-layer authorization model. User data and activity (Visits) 
-     * are protected via strict ownership checks. Administrative access is decoupled from 
-     * standard user profiles using a dedicated, existence-based collection (/roles_admin) 
-     * to provide a robust, database-level Source of Truth for elevated permissions.
-     *
-     * DATA STRUCTURE:
-     * - /users/{userId}: Private user profiles, where document ID matches Auth UID.
-     * - /visits/{visitId}: Flat collection of visit events, denormalized with 'userId' for direct ownership checks.
-     * - /roles_admin/{adminId}: A marker collection; the presence of a UID here grants global admin rights.
-     *
-     * KEY SECURITY DECISIONS:
-     * 1. Authorization Independence: Visits store the 'userId' directly. Rules verify this 
-     *    against request.auth.uid without needing to fetch the UserProfile document.
-     * 2. Admin Hierarchy: Users in the 'roles_admin' collection bypass ownership restrictions 
-     *    for reporting, statistics, and user management.
-     * 3. Institutional Restriction: Self-registration is allowed only if the provided 
-     *    email matches the required institutional domain (e.g., @neu.edu).
-     * 4. Structural Integrity: Critical fields like 'userId' and 'role' are protected against 
-     *    unauthorized modification to prevent privilege escalation.
-     */
-
-    // --- Helper Functions ---
-
-    /** Checks if the request is from an authenticated user. */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /** 
-     * Checks if the authenticated user is a registered Administrator.
-     * Uses the existence-based check in the roles_admin collection.
-     */
     function isAdmin() {
       return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
-    /** Checks if the provided ID matches the authenticated user's UID. */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** 
-     * Verifies existence before allowing an operation.
-     * Combines ownership and existence for update/delete operations.
-     */
-    function isExistingOwner(userId) {
-      return resource != null && isOwner(userId);
-    }
-
-    /** Validates that the email belongs to the Neu institutional domain. */
-    function isNeuEmail(email) {
-      return email.matches('.*@neu\\.edu$');
-    }
-
-    // --- Collection Rules ---
-
-    /**
-     * @description Rules for user profiles. Users manage their own profiles; admins can view/manage all.
-     * @path /users/{userId}
-     * @allow (get) If user is the owner or an admin.
-     * @allow (create) If user is creating their own profile with a valid institutional email.
-     * @deny (list) If the user is not an admin (prevents user enumeration).
-     * @principle Path-based ownership and relational integrity for user creation.
-     */
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
-      
-      allow create: if isOwner(userId) 
-                    && request.resource.data.id == userId
-                    && isNeuEmail(request.resource.data.email);
-      
-      allow update: if (isExistingOwner(userId) && request.resource.data.role == resource.data.role) 
-                    || isAdmin();
-      
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isAdmin();
       allow delete: if isAdmin();
     }
 
-    /**
-     * @description Records of library or office visits.
-     * @path /visits/{visitId}
-     * @allow (list) If user is an admin, or if the user filters the query by their own UID.
-     * @allow (create) If the signed-in user correctly attributes the visit to their own UID.
-     * @deny (update) If a visitor attempts to change the 'userId' field (field immutability).
-     * @principle Denormalization for Authorization (userId stored on document).
-     */
     match /visits/{visitId} {
       allow get: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
-      allow list: if isAdmin() || (isSignedIn() && request.query.limit <= 100); // Simple query limit for safety
-
-      allow create: if isSignedIn() 
-                    && request.resource.data.userId == request.auth.uid;
-
-      allow update: if isAdmin() 
-                    || (isExistingOwner(resource.data.userId) && request.resource.data.userId == resource.data.userId);
-
+      allow list: if isAdmin() || (isSignedIn() && request.query.limit <= 100);
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
       allow delete: if isAdmin();
     }
 
-    /**
-     * @description Markers for admin role assignment.
-     * @path /roles_admin/{adminId}
-     * @allow (read) Only for authenticated admins.
-     * @deny (write) Public or self-assignment of admin roles.
-     * @principle Database Access Control (DBAC) using existence-based markers.
-     */
+    match /user_sessions/{userId} {
+      allow read: if isAdmin() || isOwner(userId);
+      allow create, update, delete: if isOwner(userId);
+    }
+
     match /roles_admin/{adminId} {
-      allow read: if isAdmin();
-      
-      // Admin roles are typically managed via a secure backend, CLI, or by an existing Super Admin.
-      // Prototyping Mode: Only allow existing admins to manage other admins.
-      allow create, update, delete: if isAdmin();
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
   }
 }

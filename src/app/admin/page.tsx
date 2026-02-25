@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -11,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth, useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import { collection, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp } from 'firebase/firestore';
 import { generateSummaryReport } from '@/ai/flows/generate-summary-report';
 import { 
   Users, 
@@ -24,7 +25,10 @@ import {
   TrendingUp,
   LogOut,
   Sparkles,
-  Loader2
+  Loader2,
+  Smartphone,
+  Monitor,
+  Activity
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -53,6 +57,11 @@ export default function AdminDashboard() {
   }, [db]);
   const { data: usersData, isLoading: usersLoading } = useCollection(usersQuery);
 
+  const sessionsQuery = useMemoFirebase(() => {
+    return collection(db, 'user_sessions');
+  }, [db]);
+  const { data: sessionsData, isLoading: sessionsLoading } = useCollection(sessionsQuery);
+
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login?role=admin');
@@ -61,9 +70,11 @@ export default function AdminDashboard() {
 
   const visits = visitsData || [];
   const users = usersData || [];
+  const sessions = sessionsData || [];
 
   const stats = {
     total: visits.length,
+    active: sessions.length,
     day: visits.filter(v => {
       const visitDate = v.checkInTime ? new Date(v.checkInTime) : new Date();
       return visitDate.toDateString() === new Date().toDateString();
@@ -73,11 +84,6 @@ export default function AdminDashboard() {
       const visitDate = v.checkInTime ? new Date(v.checkInTime) : new Date();
       const diff = now.getTime() - visitDate.getTime();
       return diff < 7 * 24 * 60 * 60 * 1000;
-    }).length,
-    month: visits.filter(v => {
-      const now = new Date();
-      const visitDate = v.checkInTime ? new Date(v.checkInTime) : new Date();
-      return now.getMonth() === visitDate.getMonth() && now.getFullYear() === visitDate.getFullYear();
     }).length,
   };
 
@@ -128,7 +134,7 @@ export default function AdminDashboard() {
     setGeneratingReport(true);
     try {
       const result = await generateSummaryReport({
-        visitLogs: JSON.stringify(visits.slice(0, 50)) // Limit for prompt size
+        visitLogs: JSON.stringify(visits.slice(0, 50))
       });
       setReport(result.summaryReport);
       setActiveTab('reports');
@@ -143,8 +149,11 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleLogout = () => {
-    auth.signOut();
+  const handleLogout = async () => {
+    if (user) {
+      deleteDoc(doc(db, 'user_sessions', user.uid));
+    }
+    await auth.signOut();
     router.push('/');
   };
 
@@ -202,6 +211,19 @@ export default function AdminDashboard() {
               </div>
             </CardContent>
           </Card>
+          <Card className="bg-white border-l-4 border-l-green-500 shadow-sm hover:shadow-md transition-shadow">
+            <CardContent className="pt-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Active Sessions</p>
+                  <h3 className="text-3xl font-bold">{stats.active}</h3>
+                </div>
+                <div className="p-2 bg-green-500/10 rounded-lg">
+                  <Activity className="h-6 w-6 text-green-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           <Card className="bg-white border-l-4 border-l-accent shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="pt-6">
               <div className="flex justify-between items-center">
@@ -215,28 +237,15 @@ export default function AdminDashboard() {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-white border-l-4 border-l-green-500 shadow-sm hover:shadow-md transition-shadow">
+          <Card className="bg-white border-l-4 border-l-purple-500 shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="pt-6">
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">This Week</p>
                   <h3 className="text-3xl font-bold">{stats.week}</h3>
                 </div>
-                <div className="p-2 bg-green-500/10 rounded-lg">
-                  <PieChart className="h-6 w-6 text-green-500" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-white border-l-4 border-l-purple-500 shadow-sm hover:shadow-md transition-shadow">
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">This Month</p>
-                  <h3 className="text-3xl font-bold">{stats.month}</h3>
-                </div>
                 <div className="p-2 bg-purple-500/10 rounded-lg">
-                  <Users className="h-6 w-6 text-purple-500" />
+                  <PieChart className="h-6 w-6 text-purple-500" />
                 </div>
               </div>
             </CardContent>
@@ -244,31 +253,18 @@ export default function AdminDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <TabsList className="bg-white border p-1 h-12 w-fit">
-              <TabsTrigger value="stats" className="px-6 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Real-time Logs</TabsTrigger>
-              <TabsTrigger value="dean-view" className="px-6 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Dean's Desk</TabsTrigger>
-              <TabsTrigger value="users" className="px-6 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">User Management</TabsTrigger>
-              <TabsTrigger value="reports" className="px-6 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Reports</TabsTrigger>
-            </TabsList>
-
-            <div className="flex gap-2">
-              <Button 
-                onClick={handleGenerateReport} 
-                disabled={generatingReport}
-                className="bg-accent hover:bg-accent/90 text-white gap-2 h-12 px-6 shadow-sm"
-              >
-                {generatingReport ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
-                {generatingReport ? "Generating..." : "AI Summary Report"}
-              </Button>
-            </div>
-          </div>
+          <TabsList className="bg-white border p-1 h-12 w-full sm:w-fit overflow-x-auto overflow-y-hidden">
+            <TabsTrigger value="stats" className="px-6 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Logs</TabsTrigger>
+            <TabsTrigger value="active-sessions" className="px-6 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Active Sessions</TabsTrigger>
+            <TabsTrigger value="dean-view" className="px-6 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Dean's Desk</TabsTrigger>
+            <TabsTrigger value="users" className="px-6 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Users</TabsTrigger>
+            <TabsTrigger value="reports" className="px-6 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">AI Reports</TabsTrigger>
+          </TabsList>
 
           <TabsContent value="stats" className="animate-in fade-in duration-300">
             <Card>
               <CardHeader>
                 <CardTitle>Global Visitor Logs</CardTitle>
-                <CardDescription>Real-time stream of library and office visits.</CardDescription>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -283,28 +279,66 @@ export default function AdminDashboard() {
                   <TableBody>
                     {visits.map(visit => (
                       <TableRow key={visit.id}>
-                        <TableCell className="font-medium text-xs">
+                        <TableCell className="text-xs">
                           {visit.checkInTime ? format(new Date(visit.checkInTime), 'MMM d, h:mm a') : 'N/A'}
                         </TableCell>
                         <TableCell className="text-xs">{visit.collegeDepartment}</TableCell>
                         <TableCell className="text-sm">{visit.reason}</TableCell>
                         <TableCell>
-                          <Badge 
-                            variant="outline" 
-                            className={`rounded-md capitalize ${
-                              visit.status === 'completed' ? 'bg-green-50 text-green-700 border-green-200' :
-                              visit.status === 'in-meeting' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                              'bg-orange-50 text-orange-700 border-orange-200'
-                            }`}
-                          >
+                          <Badge variant="outline" className="capitalize">
                             {visit.status || 'waiting'}
                           </Badge>
                         </TableCell>
                       </TableRow>
                     ))}
-                    {visits.length === 0 && (
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="active-sessions" className="animate-in fade-in duration-300">
+            <Card>
+              <CardHeader>
+                <CardTitle>Real-time Active Sessions</CardTitle>
+                <CardDescription>Live monitoring of users currently logged into the portal.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      <TableHead>Login Time</TableHead>
+                      <TableHead>Device</TableHead>
+                      <TableHead className="text-right">Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sessions.map(session => (
+                      <TableRow key={session.id}>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{session.fullName}</span>
+                            <span className="text-xs text-muted-foreground">{session.email}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {session.loginTime ? format(new Date(session.loginTime), 'h:mm a') : 'Now'}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {session.deviceType === 'Mobile' ? <Smartphone className="h-4 w-4 text-accent" /> : <Monitor className="h-4 w-4 text-primary" />}
+                            <span className="text-xs">{session.deviceType || 'Unknown'}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Badge className="bg-green-500">Live</Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {sessions.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">No visits recorded yet.</TableCell>
+                        <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">No active users.</TableCell>
                       </TableRow>
                     )}
                   </TableBody>
@@ -317,14 +351,12 @@ export default function AdminDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>Dean's Waiting Room</CardTitle>
-                <CardDescription>Active appointments and visitor queue management.</CardDescription>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>ID Number</TableHead>
-                      <TableHead>Department</TableHead>
                       <TableHead>Purpose</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -334,34 +366,22 @@ export default function AdminDashboard() {
                     {visits.filter(v => v.studentEmployeeId).map(visit => (
                       <TableRow key={visit.id}>
                         <TableCell className="font-mono text-sm">{visit.studentEmployeeId}</TableCell>
-                        <TableCell className="text-sm">{visit.collegeDepartment}</TableCell>
                         <TableCell>{visit.reason}</TableCell>
                         <TableCell>
-                          <Badge className={`capitalize ${
-                            visit.status === 'waiting' ? 'bg-orange-500' : 
-                            visit.status === 'in-meeting' ? 'bg-blue-500' : 'bg-green-500'
-                          }`}>
+                          <Badge className="capitalize">
                             {visit.status || 'waiting'}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right space-x-2">
                           {(visit.status === 'waiting' || !visit.status) && (
-                            <Button size="sm" onClick={() => handleUpdateVisitStatus(visit.id, 'in-meeting')}>Start Meeting</Button>
+                            <Button size="sm" onClick={() => handleUpdateVisitStatus(visit.id, 'in-meeting')}>Start</Button>
                           )}
                           {visit.status === 'in-meeting' && (
-                            <Button size="sm" variant="outline" onClick={() => handleUpdateVisitStatus(visit.id, 'completed')}>Complete</Button>
-                          )}
-                          {visit.status === 'completed' && (
-                            <CheckCircle2 className="h-5 w-5 text-green-500 inline-block" />
+                            <Button size="sm" variant="outline" onClick={() => handleUpdateVisitStatus(visit.id, 'completed')}>End</Button>
                           )}
                         </TableCell>
                       </TableRow>
                     ))}
-                    {visits.filter(v => v.studentEmployeeId).length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No active appointments.</TableCell>
-                      </TableRow>
-                    )}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -370,15 +390,12 @@ export default function AdminDashboard() {
 
           <TabsContent value="users" className="animate-in fade-in duration-300">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                <div>
-                  <CardTitle>Institutional User Directory</CardTitle>
-                  <CardDescription>Search and manage access for students and staff.</CardDescription>
-                </div>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>User Directory</CardTitle>
                 <div className="relative w-64">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input 
-                    placeholder="Search by name..." 
+                    placeholder="Search..." 
                     className="pl-8" 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -391,7 +408,6 @@ export default function AdminDashboard() {
                     <TableRow>
                       <TableHead>User</TableHead>
                       <TableHead>Role</TableHead>
-                      <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -399,36 +415,17 @@ export default function AdminDashboard() {
                     {filteredUsers.map(u => (
                       <TableRow key={u.id}>
                         <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                              {(u.fullName || 'U').charAt(0)}
-                            </div>
-                            <div>
-                              <div className="font-semibold">{u.fullName || 'Anonymous'}</div>
-                              <div className="text-xs text-muted-foreground">{u.email}</div>
-                            </div>
-                          </div>
+                          <div className="font-semibold">{u.fullName}</div>
+                          <div className="text-xs text-muted-foreground">{u.email}</div>
                         </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{u.role || 'Visitor'}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          {u.blocked ? (
-                            <Badge variant="destructive">Blocked</Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">Active</Badge>
-                          )}
-                        </TableCell>
+                        <TableCell><Badge variant="outline">{u.role}</Badge></TableCell>
                         <TableCell className="text-right">
                           <Button 
                             variant={u.blocked ? "outline" : "destructive"} 
                             size="sm" 
-                            className="gap-2"
                             onClick={() => handleBlockUser(u.id, !!u.blocked)}
-                            disabled={u.role === 'Admin' && u.id === user?.uid}
                           >
-                            <UserX className="h-4 w-4" />
-                            {u.blocked ? "Unblock" : "Block User"}
+                            {u.blocked ? "Unblock" : "Block"}
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -440,32 +437,20 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="reports" className="animate-in fade-in duration-300">
-            <Card className="border-accent/20">
-              <CardHeader className="bg-accent/5">
-                <div className="flex items-center gap-2 mb-2">
-                  <Sparkles className="h-5 w-5 text-accent" />
-                  <Badge variant="outline" className="border-accent text-accent">AI Generated</Badge>
-                </div>
-                <CardTitle className="text-2xl font-headline">Institutional Usage Report</CardTitle>
-                <CardDescription>Generated {format(new Date(), 'PPP')}</CardDescription>
+            <Card>
+              <CardHeader>
+                <Button onClick={handleGenerateReport} disabled={generatingReport} className="gap-2">
+                  {generatingReport ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  Generate AI Summary
+                </Button>
               </CardHeader>
-              <CardContent className="pt-6">
+              <CardContent>
                 {report ? (
-                  <div className="prose max-w-none prose-blue">
-                    <div className="whitespace-pre-wrap leading-relaxed text-slate-700 font-body p-6 bg-slate-50 rounded-xl border shadow-inner">
-                      {report}
-                    </div>
+                  <div className="p-6 bg-slate-50 rounded-xl border shadow-inner whitespace-pre-wrap">
+                    {report}
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center py-24 text-center space-y-4">
-                    <div className="p-4 bg-accent/10 rounded-full">
-                      <FileText className="h-12 w-12 text-accent" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold">No Report Generated</h3>
-                      <p className="text-muted-foreground">Click the "AI Summary Report" button to analyze visitor trends.</p>
-                    </div>
-                  </div>
+                  <div className="text-center py-12 text-muted-foreground">Click generate to analyze trends.</div>
                 )}
               </CardContent>
             </Card>

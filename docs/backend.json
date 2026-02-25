@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -99,6 +100,20 @@
         "checkInTime",
         "reason"
       ]
+    },
+    "UserSession": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserSession",
+      "type": "object",
+      "description": "Represents an active user session for real-time monitoring.",
+      "properties": {
+        "userId": { "type": "string" },
+        "email": { "type": "string" },
+        "fullName": { "type": "string" },
+        "loginTime": { "type": "string", "format": "date-time" },
+        "deviceType": { "type": "string", "description": "e.g., Mobile or Desktop" }
+      },
+      "required": ["userId", "email", "loginTime"]
     }
   },
   "auth": {
@@ -116,12 +131,9 @@
           "schema": {
             "$ref": "#/backend/entities/UserProfile"
           },
-          "description": "Stores individual user profiles. The document ID `{userId}` matches the Firebase Auth UID. Includes denormalized 'role' field for UI logic and a 'blocked' field for user management. This is the primary source of user data for the application.",
+          "description": "Stores individual user profiles.",
           "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user, matching their Firebase Authentication UID."
-            }
+            { "name": "userId", "description": "Auth UID" }
           ]
         }
       },
@@ -132,12 +144,22 @@
           "schema": {
             "$ref": "#/backend/entities/Visit"
           },
-          "description": "Records individual visits by users to the library or Dean's office. Includes denormalized 'userId' for authorization independence, allowing security rules to directly verify ownership without 'get()' operations on parent documents. Also contains 'collegeDepartment', 'reason', and 'status' for statistics and appointment tracking.",
+          "description": "Records individual visits.",
           "params": [
-            {
-              "name": "visitId",
-              "description": "The unique identifier for a specific visit event."
-            }
+            { "name": "visitId", "description": "Visit ID" }
+          ]
+        }
+      },
+      {
+        "path": "/user_sessions/{userId}",
+        "definition": {
+          "entityName": "UserSession",
+          "schema": {
+            "$ref": "#/backend/entities/UserSession"
+          },
+          "description": "Tracks active user sessions in real-time.",
+          "params": [
+            { "name": "userId", "description": "Auth UID" }
           ]
         }
       },
@@ -145,19 +167,12 @@
         "path": "/roles_admin/{adminId}",
         "definition": {
           "entityName": "AdminRole",
-          "schema": {
-            "$ref": "#/backend/entities/AdminRole"
-          },
-          "description": "A dedicated collection for robust administrative role assignment. The existence of a document at `/roles_admin/{adminId}` indicates that the user with `adminId` is an administrator. This collection is used exclusively for efficient and atomic security rule checks (using 'exists()') for critical admin permissions, separating rule-based authorization from the 'role' field in UserProfile for clarity and security.",
+          "description": "Admin marker collection.",
           "params": [
-            {
-              "name": "adminId",
-              "description": "The unique identifier of an administrator, matching their Firebase Authentication UID."
-            }
+            { "name": "adminId", "description": "Auth UID" }
           ]
         }
       }
-    ],
-    "reasoning": "The Firestore structure is designed to be secure, scalable, and easily debuggable, prioritizing Authorization Independence and supporting Query Ability with Security (QAPs).\n\n1.  **Users Collection (`/users/{userId}`)**: This top-level collection stores `UserProfile` documents. The `userId` document ID directly corresponds to the Firebase Authentication UID (`request.auth.uid`). This structure inherently provides path-based ownership for individual users, making it straightforward to write security rules where a user can read or modify only their own profile data (e.g., `match /users/{userId} { allow read, update: if request.auth.uid == userId; }`). For administrative access, the `role` field within the `UserProfile` indicates whether a user is an 'admin' or 'visitor', but for critical security rule checks, a dedicated `roles_admin` collection is used.\n\n2.  **Visits Collection (`/visits/{visitId}`)**: This top-level collection stores `Visit` documents. Each `Visit` document includes a `userId` field, which is a direct reference to the UID of the user who initiated the visit. This is a crucial aspect of **Authorization Independence (CRITICAL)**. Instead of relying on a parent collection or performing a `get()` operation to fetch the user's role or ownership from `/users/{userId}`, the `Visit` document itself contains the necessary `userId` for authorization. Security rules can directly check `request.auth.uid == resource.data.userId` for visitor access. This denormalization eliminates `get()` calls in rules, enhancing atomic operations and simplifying rule logic. Admins (as determined by the `roles_admin` collection) are granted read access to all `visits` to facilitate real-time statistics and reporting.\n\n3.  **Admin Roles Collection (`/roles_admin/{adminId}`)**: This collection serves as a dedicated, existence-based authorization mechanism for administrators. Each document in this collection has an `adminId` that matches the `request.auth.uid` of an administrator. This directly supports the **DBAC (Database Access Control)** principle, where roles are stored in the database. Its primary purpose is to provide a fast and robust check within security rules, like `exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid))`. This check is atomic and doesn't depend on `get()` operations on other documents or complex data. It ensures that only truly authorized administrators can perform sensitive operations, regardless of the `role` field in their `UserProfile` (which could be subject to more lenient update rules or client-side manipulation).\n\n**How the structure achieves Authorization Independence**: Authorization for `UserProfile` is path-based (`/users/{userId}` where `userId` is `request.auth.uid`). Authorization for `Visit` documents leverages denormalization by including `userId` directly in the `Visit` document itself, eliminating the need to `get()` a parent `UserProfile` to determine ownership. Admin authorization is handled via a dedicated `roles_admin` collection, using `exists()` checks, which are atomic and independent of other document data.\n\n**How the structure supports QAPs (Rules are not Filters)**:\n\n*   **`/users/{userId}`**: Individual users can only `get` their own `UserProfile`. For admins, the structure supports querying and listing all users. Admin security rules will explicitly allow `list` and `get` operations on `/users` for users whose `request.auth.uid` exists in the `/roles_admin` collection. This permits the 'User Management' and 'Search Bar' features on the admin dashboard while maintaining security.\n*   **`/visits/{visitId}`**: Visitors can create new visits and query (`list`) *only their own* past visits by filtering on `userId == request.auth.uid`. Security rules will enforce `resource.data.userId == request.auth.uid` for visitors' read/update operations. Admins, identified by their presence in `/roles_admin`, are explicitly allowed to `list` all documents in `/visits`. This enables the 'Real-time Statistics Dashboard' and 'Summary Report Generation' features for admins by allowing them to fetch all visit data efficiently, without being constrained by row-level filters that would violate QAP principles for an authorized list operation."
+    ]
   }
 }
