@@ -110,7 +110,7 @@ export default function VisitorPage() {
             <CheckCircle2 className="h-12 w-12 text-green-600" />
           </div>
           <div className="space-y-3">
-            <h2 className="text-3xl font-extrabold font-headline text-primary">Check-in Verified</h2>
+            <h2 className="text-3xl font-extrabold font-headline text-primary">Welcome to NEU Library!</h2>
             <p className="text-muted-foreground leading-relaxed">Your visit to the <strong>{department}</strong> has been officially recorded in the OpenShelf system.</p>
           </div>
           <div className="pt-4 space-y-4">
