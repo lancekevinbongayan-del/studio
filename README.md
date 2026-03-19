@@ -27,4 +27,6 @@ OpenShelf Analytics is a comprehensive visitor management system focusing on ins
 ## 🌐 Live Demo
 
 You can view the deployed application here:
-**[View Live App](https://studio-8706353121-4d298.web.app)**
+**[View Live App](https://studio-8706353121-4d298.web.app)**# My Awesome Project
+
+[![Live Demo](https://img.shields.io/badge/demo-live-green?style=for-the-badge&logo=firebase)](https://studio-8706353121-4d298.web.app)
