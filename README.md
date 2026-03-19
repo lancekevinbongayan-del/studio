@@ -24,3 +24,7 @@ LibTrack Analytics is a comprehensive visitor management system focusing on inst
 - **Authentication:** Firebase Auth
 - **AI Integration:** Firebase Genkit with Google Generative AI
 - **Hosting:** Firebase App Hosting
+## 🌐 Live Demo
+
+You can view the deployed application here:
+**[View Live App](https://your-project-id.web.app)**
