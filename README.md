@@ -1,9 +1,9 @@
-# LibTrack Analytics
+# OpenShelf Analytics
 
 A QR-based library and academic office visitor management system for New Era University.
 
 ## 📜 Description
-LibTrack Analytics is a comprehensive visitor management system focusing on institutional authentication, role-based dashboards, and real-time usage statistics. It streamlines the check-in process for students while providing administrators with AI-powered insights into facility usage.
+OpenShelf Analytics is a comprehensive visitor management system focusing on institutional authentication, role-based dashboards, and real-time usage statistics. It streamlines the check-in process for students while providing administrators with AI-powered insights into facility usage.
 
 ## 🚀 Key Features
 - **Institutional Authentication:** Secure login restricted to `@neu.edu.ph` domains using Firebase Auth.

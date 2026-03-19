@@ -116,7 +116,7 @@ export default function AdminRegistration() {
             )}
           </div>
           <CardTitle className="text-2xl font-bold font-headline">Admin Registration</CardTitle>
-          <CardDescription>Create a new administrative account for LibTrack</CardDescription>
+          <CardDescription>Create a new administrative account for OpenShelf</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleRegister} className="space-y-4">

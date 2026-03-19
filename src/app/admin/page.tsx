@@ -195,7 +195,7 @@ export default function AdminDashboard() {
             <div className="bg-white p-0.5 rounded-full overflow-hidden flex items-center justify-center">
               {logo && <Image src={logo.imageUrl} alt="Logo" width={32} height={32} />}
             </div>
-            <h1 className="text-2xl font-bold font-headline">LibTrack Admin</h1>
+            <h1 className="text-2xl font-bold font-headline">OpenShelf Admin</h1>
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right hidden sm:block">
