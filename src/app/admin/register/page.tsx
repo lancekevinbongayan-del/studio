@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import Link from 'link';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -116,7 +116,7 @@ export default function AdminRegistration() {
             )}
           </div>
           <CardTitle className="text-2xl font-bold font-headline">Admin Registration</CardTitle>
-          <CardDescription>Create a new administrative account for OpenShelf</CardDescription>
+          <CardDescription>Create a new administrative account for LibTrack</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleRegister} className="space-y-4">

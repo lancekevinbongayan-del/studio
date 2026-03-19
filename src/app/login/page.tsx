@@ -122,7 +122,7 @@ function LoginForm() {
           </div>
           <div>
             <CardTitle className="text-3xl font-headline font-bold">Admin Login</CardTitle>
-            <CardDescription>Secure access for OpenShelf administrators</CardDescription>
+            <CardDescription>Secure access for LibTrack administrators</CardDescription>
           </div>
         </CardHeader>
         <CardContent>

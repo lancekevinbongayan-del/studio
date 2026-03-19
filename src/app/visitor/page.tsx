@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -130,7 +130,7 @@ export default function VisitorPage() {
             <div className="bg-white p-0.5 rounded-full overflow-hidden flex items-center justify-center">
               {logo && <Image src={logo.imageUrl} alt="Logo" width={32} height={32} />}
             </div>
-            <h1 className="text-xl font-bold font-headline">OpenShelf Visitor Portal</h1>
+            <h1 className="text-xl font-bold font-headline">LibTrack Visitor Portal</h1>
           </div>
           <Button variant="secondary" size="sm" onClick={handleLogout} className="gap-2">
             <LogOut className="h-4 w-4" /> Exit
