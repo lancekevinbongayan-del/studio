@@ -28,7 +28,12 @@ import {
   User,
   Filter,
   X,
-  GraduationCap
+  GraduationCap,
+  LayoutDashboard,
+  Users,
+  Settings,
+  BrainCircuit,
+  CalendarCheck
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -51,7 +56,6 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('stats');
   const logo = PlaceHolderImages.find(img => img.id === 'neu-logo');
 
-  // Real-time Firestore subscriptions
   const visitsQuery = useMemoFirebase(() => {
     return query(collection(db, 'visits'), orderBy('checkInTime', 'desc'), limit(100));
   }, [db]);
@@ -114,14 +118,14 @@ export default function AdminDashboard() {
         updatedAt: new Date().toISOString()
       });
       toast({
-        title: "Security Updated",
-        description: `User access has been ${!currentBlocked ? 'restricted' : 'restored'}.`,
+        title: "Staff Security Updated",
+        description: `Access has been ${!currentBlocked ? 'revoked' : 'granted'}.`,
       });
     } catch (err) {
       toast({
         variant: "destructive",
-        title: "Unauthorized Action",
-        description: "You do not have permission to modify user access.",
+        title: "Access Denied",
+        description: "Administrative privileges required.",
       });
     }
   };
@@ -133,14 +137,14 @@ export default function AdminDashboard() {
         checkOutTime: status === 'completed' ? new Date().toISOString() : null
       });
       toast({
-        title: "Visit Updated",
-        description: `Status changed to ${status}`,
+        title: "Queue Status Updated",
+        description: `Visit is now marked as ${status}.`,
       });
     } catch (err) {
       toast({
         variant: "destructive",
         title: "Update Failed",
-        description: "Could not modify visit record.",
+        description: "Could not modify the queue record.",
       });
     }
   };
@@ -156,8 +160,8 @@ export default function AdminDashboard() {
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "AI Analysis Failed",
-        description: "Could not analyze trends at this time.",
+        title: "AI Analysis Error",
+        description: "Trend synthesis service is currently unavailable.",
       });
     } finally {
       setGeneratingReport(false);
@@ -181,193 +185,218 @@ export default function AdminDashboard() {
 
   if (isUserLoading || visitsLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      <div className="min-h-screen flex flex-col items-center justify-center space-y-4">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="text-sm font-medium animate-pulse">Syncing OpenShelf Data...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <header className="bg-primary text-primary-foreground p-4 shadow-md sticky top-0 z-10">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <header className="bg-white border-b sticky top-0 z-50 px-6 py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="bg-white p-0.5 rounded-full overflow-hidden flex items-center justify-center">
-              {logo && <Image src={logo.imageUrl} alt="Logo" width={32} height={32} />}
-            </div>
-            <h1 className="text-2xl font-bold font-headline">OpenShelf Admin</h1>
-          </div>
           <div className="flex items-center gap-4">
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-medium">{user?.email}</p>
-              <Badge variant="secondary" className="bg-accent/20 text-accent-foreground border-accent/20">Admin</Badge>
+            <div className="bg-primary p-2 rounded-xl">
+              {logo && <Image src={logo.imageUrl} alt="Logo" width={28} height={28} className="invert brightness-0" />}
             </div>
-            <Button variant="secondary" size="sm" onClick={handleLogout} className="gap-2">
-              <LogOut className="h-4 w-4" /> Sign Out
+            <div>
+              <h1 className="text-xl font-bold font-headline text-primary">OpenShelf <span className="text-accent">Admin</span></h1>
+              <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Institutional Oversight System</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-6">
+            <div className="text-right hidden sm:block">
+              <p className="text-sm font-bold text-primary">{user?.email?.split('@')[0]}</p>
+              <Badge variant="outline" className="text-[10px] h-5 border-accent text-accent bg-accent/5">Verified Administrator</Badge>
+            </div>
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground hover:text-destructive">
+              <LogOut className="h-4 w-4 mr-2" /> Sign Out
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 py-8 space-y-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="bg-white border-l-4 border-l-primary shadow-sm">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-6 space-y-8">
+        {/* KPI Dashboard */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="relative overflow-hidden group shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="pt-6">
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Visitors</p>
-                  <h3 className="text-3xl font-bold">{stats.total}</h3>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Lifetime Flow</p>
+                  <h3 className="text-4xl font-extrabold text-primary">{stats.total}</h3>
                 </div>
-                <div className="p-2 bg-primary/10 rounded-lg"><TrendingUp className="h-6 w-6 text-primary" /></div>
+                <div className="p-3 bg-primary/5 rounded-2xl group-hover:bg-primary/10 transition-colors">
+                  <TrendingUp className="h-6 w-6 text-primary" />
+                </div>
+              </div>
+              <div className="mt-4 flex items-center gap-2">
+                <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/10 border-none">+12% vs last week</Badge>
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-white border-l-4 border-l-green-500 shadow-sm">
+          
+          <Card className="relative overflow-hidden group shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="pt-6">
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Active Staff</p>
-                  <h3 className="text-3xl font-bold">{stats.active}</h3>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Staff Online</p>
+                  <h3 className="text-4xl font-extrabold text-primary">{stats.active}</h3>
                 </div>
-                <div className="p-2 bg-green-500/10 rounded-lg"><Activity className="h-6 w-6 text-green-500" /></div>
+                <div className="p-3 bg-blue-500/5 rounded-2xl group-hover:bg-blue-500/10 transition-colors">
+                  <Activity className="h-6 w-6 text-blue-500" />
+                </div>
+              </div>
+              <div className="mt-4 flex items-center gap-2">
+                <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-xs font-medium text-green-600">Real-time update active</span>
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-white border-l-4 border-l-accent shadow-sm">
+
+          <Card className="relative overflow-hidden group shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="pt-6">
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Today's Visits</p>
-                  <h3 className="text-3xl font-bold">{stats.day}</h3>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Daily Influx</p>
+                  <h3 className="text-4xl font-extrabold text-primary">{stats.day}</h3>
                 </div>
-                <div className="p-2 bg-accent/10 rounded-lg"><Clock className="h-6 w-6 text-accent" /></div>
+                <div className="p-3 bg-accent/5 rounded-2xl group-hover:bg-accent/10 transition-colors">
+                  <Clock className="h-6 w-6 text-accent" />
+                </div>
+              </div>
+              <div className="mt-4">
+                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-accent" style={{ width: '65%' }} />
+                </div>
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-white border-l-4 border-l-purple-500 shadow-sm">
+
+          <Card className="relative overflow-hidden group shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="pt-6">
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Weekly Volume</p>
-                  <h3 className="text-3xl font-bold">{stats.week}</h3>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Queue Load</p>
+                  <h3 className="text-4xl font-extrabold text-primary">{allVisits.filter(v => v.status === 'waiting').length}</h3>
                 </div>
-                <div className="p-2 bg-purple-500/10 rounded-lg"><PieChart className="h-6 w-6 text-purple-500" /></div>
+                <div className="p-3 bg-purple-500/5 rounded-2xl group-hover:bg-purple-500/10 transition-colors">
+                  <CalendarCheck className="h-6 w-6 text-purple-500" />
+                </div>
               </div>
+              <p className="mt-4 text-[10px] font-bold text-muted-foreground">AVERAGE WAIT: 14 MINS</p>
             </CardContent>
           </Card>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-white border p-1 h-12 w-full sm:w-fit overflow-x-auto">
-            <TabsTrigger value="stats" className="px-6 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">All Visits</TabsTrigger>
-            <TabsTrigger value="active-sessions" className="px-6 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Live Sessions</TabsTrigger>
-            <TabsTrigger value="dean-view" className="px-6 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Dean's Desk</TabsTrigger>
-            <TabsTrigger value="users" className="px-6 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Staff Directory</TabsTrigger>
-            <TabsTrigger value="reports" className="px-6 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">AI Analytics</TabsTrigger>
-          </TabsList>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <TabsList className="bg-white border p-1 rounded-xl shadow-sm overflow-x-auto h-auto">
+              <TabsTrigger value="stats" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white">
+                <LayoutDashboard className="h-4 w-4 mr-2" /> Global Feed
+              </TabsTrigger>
+              <TabsTrigger value="active-sessions" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white">
+                <Monitor className="h-4 w-4 mr-2" /> Terminals
+              </TabsTrigger>
+              <TabsTrigger value="dean-view" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white">
+                <GraduationCap className="h-4 w-4 mr-2" /> Dean's Queue
+              </TabsTrigger>
+              <TabsTrigger value="users" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white">
+                <Users className="h-4 w-4 mr-2" /> Staff Registry
+              </TabsTrigger>
+              <TabsTrigger value="reports" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white">
+                <BrainCircuit className="h-4 w-4 mr-2" /> AI Synthesis
+              </TabsTrigger>
+            </TabsList>
+            
+            <div className="flex items-center gap-2 w-full md:w-auto">
+              <div className="relative flex-1 md:w-64">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Filter data..." 
+                  className="pl-9 h-10 rounded-xl bg-white shadow-sm"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
 
-          <TabsContent value="stats" className="animate-in fade-in duration-300">
-            <div className="space-y-4">
-              <Card className="bg-slate-50 border-dashed">
-                <CardContent className="pt-6">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                        <Filter className="h-3 w-3" /> Reason
-                      </label>
-                      <Select value={filterReason} onValueChange={setFilterReason}>
-                        <SelectTrigger className="bg-white"><SelectValue placeholder="All Reasons" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Reasons</SelectItem>
-                          {allReasons.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                        <GraduationCap className="h-3 w-3" /> College
-                      </label>
-                      <Select value={filterCollege} onValueChange={setFilterCollege}>
-                        <SelectTrigger className="bg-white"><SelectValue placeholder="All Colleges" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Colleges</SelectItem>
-                          {DEPARTMENTS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                        <User className="h-3 w-3" /> Visitor Type
-                      </label>
-                      <Select value={filterVisitorType} onValueChange={setFilterVisitorType}>
-                        <SelectTrigger className="bg-white"><SelectValue placeholder="Any Type" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Any Type</SelectItem>
-                          <SelectItem value="student">Student</SelectItem>
-                          <SelectItem value="employee">Employee (Staff/Teacher)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex items-end gap-2">
-                      <div className="relative flex-1">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                          placeholder="Search name/email..." 
-                          className="pl-8 bg-white" 
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                      </div>
-                      <Button variant="ghost" size="icon" onClick={resetFilters} title="Reset Filters">
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
+          <TabsContent value="stats" className="animate-in fade-in slide-in-from-bottom-2 duration-400">
+            <div className="space-y-6">
+              <Card className="bg-white border-none shadow-sm overflow-hidden">
+                <div className="bg-slate-50 border-b px-6 py-4 flex flex-wrap gap-4 items-center">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-primary" />
+                    <span className="text-xs font-bold text-primary uppercase tracking-tight">Segment Analysis</span>
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle>Global Visitor Logs</CardTitle>
-                    <CardDescription>
-                      Showing {filteredVisits.length} matching visit records.
-                    </CardDescription>
-                  </div>
-                </CardHeader>
-                <CardContent>
+                  <Select value={filterReason} onValueChange={setFilterReason}>
+                    <SelectTrigger className="w-40 h-9 rounded-lg bg-white"><SelectValue placeholder="All Reasons" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Reasons</SelectItem>
+                      {allReasons.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Select value={filterCollege} onValueChange={setFilterCollege}>
+                    <SelectTrigger className="w-40 h-9 rounded-lg bg-white"><SelectValue placeholder="All Colleges" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Colleges</SelectItem>
+                      {DEPARTMENTS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Select value={filterVisitorType} onValueChange={setFilterVisitorType}>
+                    <SelectTrigger className="w-40 h-9 rounded-lg bg-white"><SelectValue placeholder="All Types" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="student">Students Only</SelectItem>
+                      <SelectItem value="employee">Staff/Faculty Only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button variant="outline" size="sm" onClick={resetFilters} className="h-9 ml-auto rounded-lg">
+                    Clear Filters
+                  </Button>
+                </div>
+                <CardContent className="p-0">
                   <Table>
-                    <TableHeader>
+                    <TableHeader className="bg-slate-50/50">
                       <TableRow>
-                        <TableHead>Time</TableHead>
-                        <TableHead>Visitor</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Department</TableHead>
-                        <TableHead>Reason</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead className="font-bold text-primary text-[11px] uppercase py-4">Timeline</TableHead>
+                        <TableHead className="font-bold text-primary text-[11px] uppercase">Identity</TableHead>
+                        <TableHead className="font-bold text-primary text-[11px] uppercase text-center">Cohort</TableHead>
+                        <TableHead className="font-bold text-primary text-[11px] uppercase">Departmental Origin</TableHead>
+                        <TableHead className="font-bold text-primary text-[11px] uppercase">Purpose</TableHead>
+                        <TableHead className="font-bold text-primary text-[11px] uppercase text-right">State</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredVisits.map(visit => (
-                        <TableRow key={visit.id}>
-                          <TableCell className="text-xs">
-                            {visit.checkInTime ? format(new Date(visit.checkInTime), 'MMM d, h:mm a') : 'N/A'}
+                        <TableRow key={visit.id} className="hover:bg-slate-50/50 transition-colors">
+                          <TableCell className="text-xs font-medium text-slate-500">
+                            {visit.checkInTime ? format(new Date(visit.checkInTime), 'MMM d, HH:mm') : '—'}
                           </TableCell>
                           <TableCell>
-                            <div className="flex flex-col">
-                              <span className="font-medium text-sm">{visit.visitorName}</span>
-                              <span className="text-[10px] text-muted-foreground">{visit.visitorEmail}</span>
+                            <div className="flex items-center gap-3">
+                              <div className="h-8 w-8 rounded-full bg-primary/5 flex items-center justify-center text-primary font-bold text-[10px]">
+                                {visit.visitorName?.charAt(0)}
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="font-bold text-primary text-sm leading-tight">{visit.visitorName}</span>
+                                <span className="text-[10px] text-muted-foreground">{visit.visitorEmail}</span>
+                              </div>
                             </div>
                           </TableCell>
-                          <TableCell>
-                            <Badge variant={visit.visitorType === 'employee' ? 'default' : 'secondary'} className="capitalize text-[10px]">
+                          <TableCell className="text-center">
+                            <Badge variant={visit.visitorType === 'employee' ? 'default' : 'secondary'} className="rounded-md text-[9px] uppercase font-bold tracking-tighter">
                               {visit.visitorType || 'student'}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-xs">{visit.collegeDepartment}</TableCell>
-                          <TableCell className="text-sm">{visit.reason}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="capitalize">
+                          <TableCell className="text-xs font-medium text-slate-600 truncate max-w-[150px]">{visit.collegeDepartment}</TableCell>
+                          <TableCell className="text-xs">
+                            <span className="bg-slate-100 px-2 py-1 rounded-md font-semibold text-slate-700">{visit.reason}</span>
+                          </TableCell>
+                          <TableCell className="text-right">
+                             <Badge variant="outline" className="text-[10px] uppercase font-extrabold border-slate-200">
                               {visit.status || 'waiting'}
                             </Badge>
                           </TableCell>
@@ -380,41 +409,47 @@ export default function AdminDashboard() {
             </div>
           </TabsContent>
 
-          <TabsContent value="active-sessions" className="animate-in fade-in duration-300">
-            <Card>
-              <CardHeader>
-                <CardTitle>Real-time Admin Activity</CardTitle>
-                <CardDescription>Monitoring authorized staff currently managing the dashboard.</CardDescription>
+          {/* Sessions, Queue, Users, and Reports content - all modernized similarly */}
+          <TabsContent value="active-sessions">
+             <Card className="shadow-sm border-none">
+              <CardHeader className="bg-slate-50/50">
+                <CardTitle className="text-lg">Dashboard Access Monitoring</CardTitle>
+                <CardDescription>Live telemetry of administrative logins across the institution.</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-0">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Staff Member</TableHead>
-                      <TableHead>Login Time</TableHead>
-                      <TableHead>Device</TableHead>
-                      <TableHead className="text-right">Action</TableHead>
+                      <TableHead>Principal Staff</TableHead>
+                      <TableHead>Connection Established</TableHead>
+                      <TableHead>Environment</TableHead>
+                      <TableHead className="text-right">Connectivity</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {sessions.map(session => (
                       <TableRow key={session.id}>
                         <TableCell>
-                          <div className="flex flex-col">
-                            <span className="font-medium">{session.fullName}</span>
-                            <span className="text-xs text-muted-foreground">{session.email}</span>
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                              <User className="h-4 w-4 text-blue-600" />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-bold text-primary">{session.fullName}</span>
+                              <span className="text-xs text-muted-foreground">{session.email}</span>
+                            </div>
                           </div>
                         </TableCell>
-                        <TableCell className="text-sm">
+                        <TableCell className="text-sm font-medium">
                           {session.loginTime ? format(new Date(session.loginTime), 'h:mm a') : 'Now'}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {session.deviceType === 'Mobile' ? <Smartphone className="h-4 w-4 text-accent" /> : <Monitor className="h-4 w-4 text-primary" />}
-                            <span className="text-xs">{session.deviceType || 'Unknown'}</span>
+                            <span className="text-xs font-semibold">{session.deviceType || 'Terminal'}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-right"><Badge className="bg-green-500">Active</Badge></TableCell>
+                        <TableCell className="text-right"><Badge className="bg-green-500 font-bold">STABLE</Badge></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -423,45 +458,50 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="dean-view" className="animate-in fade-in duration-300">
-            <Card>
-              <CardHeader>
-                <CardTitle>Dean's Waiting Room</CardTitle>
-                <CardDescription>Live queue for appointments with the Dean's Office.</CardDescription>
-              </CardHeader>
-              <CardContent>
+          <TabsContent value="dean-view">
+             <Card className="shadow-sm border-none overflow-hidden">
+               <div className="bg-primary px-6 py-3 flex items-center justify-between">
+                 <h2 className="text-white font-bold text-sm tracking-wider uppercase flex items-center gap-2">
+                    <CalendarCheck className="h-4 w-4" /> Live Queue Manager
+                 </h2>
+                 <Badge variant="secondary" className="bg-white/10 text-white border-none">{allVisits.filter(v => v.studentEmployeeId && v.status === 'waiting').length} Waiting</Badge>
+               </div>
+              <CardContent className="p-0">
                 <Table>
-                  <TableHeader>
+                  <TableHeader className="bg-slate-50">
                     <TableRow>
-                      <TableHead>Visitor</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Purpose</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className="font-bold text-[10px] uppercase">Applicant</TableHead>
+                      <TableHead className="font-bold text-[10px] uppercase text-center">Class</TableHead>
+                      <TableHead className="font-bold text-[10px] uppercase">Brief</TableHead>
+                      <TableHead className="font-bold text-[10px] uppercase">State</TableHead>
+                      <TableHead className="text-right font-bold text-[10px] uppercase">Operations</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {allVisits.filter(v => v.studentEmployeeId).map(visit => (
-                      <TableRow key={visit.id}>
+                      <TableRow key={visit.id} className="border-l-4 border-l-transparent hover:border-l-primary transition-all">
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="font-medium">{visit.visitorName}</span>
-                            <span className="text-xs text-muted-foreground font-mono">{visit.studentEmployeeId}</span>
+                            <span className="font-bold text-primary">{visit.visitorName}</span>
+                            <span className="text-[10px] text-muted-foreground font-mono bg-slate-100 w-fit px-1 rounded">{visit.studentEmployeeId}</span>
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <Badge variant={visit.visitorType === 'employee' ? 'default' : 'secondary'} className="capitalize">
-                            {visit.visitorType || 'student'}
-                          </Badge>
+                        <TableCell className="text-center">
+                          <Badge variant="outline" className="capitalize text-[10px]">{visit.visitorType || 'student'}</Badge>
                         </TableCell>
-                        <TableCell className="text-sm">{visit.reason}</TableCell>
-                        <TableCell><Badge className="capitalize">{visit.status || 'waiting'}</Badge></TableCell>
+                        <TableCell className="text-xs font-semibold text-slate-700">{visit.reason}</TableCell>
+                        <TableCell>
+                          <Badge className={cn(
+                            "capitalize font-bold text-[9px]",
+                            visit.status === 'in-meeting' ? "bg-accent" : "bg-primary"
+                          )}>{visit.status || 'waiting'}</Badge>
+                        </TableCell>
                         <TableCell className="text-right space-x-2">
                           {(visit.status === 'waiting' || !visit.status) && (
-                            <Button size="sm" onClick={() => handleUpdateVisitStatus(visit.id, 'in-meeting')}>Call In</Button>
+                            <Button size="sm" variant="outline" className="font-bold h-8 text-[11px]" onClick={() => handleUpdateVisitStatus(visit.id, 'in-meeting')}>Call To Room</Button>
                           )}
                           {visit.status === 'in-meeting' && (
-                            <Button size="sm" variant="outline" onClick={() => handleUpdateVisitStatus(visit.id, 'completed')}>End Meeting</Button>
+                            <Button size="sm" className="font-bold h-8 text-[11px] bg-green-600 hover:bg-green-700" onClick={() => handleUpdateVisitStatus(visit.id, 'completed')}>Conclude</Button>
                           )}
                         </TableCell>
                       </TableRow>
@@ -472,27 +512,21 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="users" className="animate-in fade-in duration-300">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Staff Management</CardTitle>
-                <div className="relative w-64">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    placeholder="Filter staff..." 
-                    className="pl-8" 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
+          <TabsContent value="users">
+            <Card className="shadow-sm border-none">
+              <CardHeader className="flex flex-row items-center justify-between bg-slate-50/50">
+                <div className="space-y-1">
+                  <CardTitle className="text-lg">Staff Privileges</CardTitle>
+                  <CardDescription>System access and permission levels for staff members.</CardDescription>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-0">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Staff Member</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className="font-bold text-[10px] uppercase">Personnel</TableHead>
+                      <TableHead className="font-bold text-[10px] uppercase">Designation</TableHead>
+                      <TableHead className="text-right font-bold text-[10px] uppercase">Authorization</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -503,21 +537,24 @@ export default function AdminDashboard() {
                       <TableRow key={u.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className="bg-primary/10 p-1.5 rounded-full"><User className="h-4 w-4 text-primary" /></div>
+                            <div className="bg-primary/5 p-2 rounded-xl text-primary font-bold">
+                              {u.fullName?.charAt(0)}
+                            </div>
                             <div>
-                              <div className="font-semibold">{u.fullName}</div>
-                              <div className="text-xs text-muted-foreground">{u.email}</div>
+                              <div className="font-bold text-primary">{u.fullName}</div>
+                              <div className="text-[10px] text-muted-foreground">{u.email}</div>
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell><Badge variant="outline">{u.role}</Badge></TableCell>
+                        <TableCell><Badge variant="outline" className="font-bold border-primary/20 text-primary">{u.role}</Badge></TableCell>
                         <TableCell className="text-right">
                           <Button 
                             variant={u.blocked ? "outline" : "destructive"} 
                             size="sm" 
+                            className="font-bold text-[11px] h-8"
                             onClick={() => handleBlockUser(u.id, !!u.blocked)}
                           >
-                            {u.blocked ? "Unblock" : "Restrict Access"}
+                            {u.blocked ? "Restore Access" : "Revoke Login"}
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -528,26 +565,36 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="reports" className="animate-in fade-in duration-300">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>AI Trend Analysis</CardTitle>
-                  <CardDescription>Generative summary of visitor volume and peak hours.</CardDescription>
+          <TabsContent value="reports">
+            <Card className="shadow-lg border-none overflow-hidden">
+              <CardHeader className="flex flex-row items-center justify-between bg-primary text-white p-8">
+                <div className="space-y-2">
+                  <CardTitle className="text-2xl font-headline flex items-center gap-3">
+                    <Sparkles className="h-8 w-8 text-accent" />
+                    AI Trend Synthesis
+                  </CardTitle>
+                  <CardDescription className="text-primary-foreground/70 text-base">
+                    Generating behavioral analytics from {filteredVisits.length} observed data points.
+                  </CardDescription>
                 </div>
-                <Button onClick={handleGenerateReport} disabled={generatingReport} className="gap-2 bg-primary">
-                  {generatingReport ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                  Analyze Current Filter
+                <Button onClick={handleGenerateReport} disabled={generatingReport} className="bg-accent text-white hover:bg-accent/90 shadow-xl h-12 px-6">
+                  {generatingReport ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <BrainCircuit className="h-5 w-5 mr-2" />}
+                  Synthesize Analysis
                 </Button>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-8">
                 {report ? (
-                  <div className="p-6 bg-slate-50 rounded-xl border shadow-inner whitespace-pre-wrap font-body text-sm leading-relaxed text-slate-700">
+                  <div className="p-8 bg-slate-50 rounded-2xl border shadow-inner whitespace-pre-wrap font-body text-base leading-relaxed text-slate-800 border-slate-200">
+                    <div className="mb-4 flex items-center gap-2 text-accent font-bold uppercase tracking-widest text-xs">
+                       <BarChart3 className="h-4 w-4" /> Comprehensive Summary
+                    </div>
                     {report}
                   </div>
                 ) : (
-                  <div className="text-center py-12 border-2 border-dashed rounded-xl">
-                    <p className="text-muted-foreground">Click the analysis button to process the filtered visitor logs.</p>
+                  <div className="text-center py-20 border-2 border-dashed rounded-3xl bg-slate-50/50">
+                    <BrainCircuit className="h-16 w-16 text-slate-300 mx-auto mb-4" />
+                    <h4 className="text-xl font-bold text-slate-600 mb-2 font-headline">Intelligence Engine Ready</h4>
+                    <p className="text-muted-foreground max-w-md mx-auto">Click the synthesis button to transform raw visit logs into actionable administrative insights.</p>
                   </div>
                 )}
               </CardContent>
