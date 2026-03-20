@@ -6,28 +6,24 @@ A professional visitor management and facility analytics system for New Era Univ
 ## 🌐 Live Application
 The application is hosted at: **[https://studio-8706353121-4d298.web.app](https://studio-8706353121-4d298.web.app)**
 
-## 🚀 Deployment Guide
+## 🚀 Deployment Guide (IMPORTANT)
 
-This project is optimized for dynamic deployment using Firebase.
+If you see the "Firebase Hosting Setup Complete" default page instead of the app, follow these steps:
 
-### Deployment via Firebase CLI
-To deploy the application and ensure the dynamic Next.js backend is active:
+### 1. Enable Web Frameworks
+Ensure your CLI supports dynamic Next.js building:
+```bash
+firebase experiments:enable webframeworks
+```
 
-1. **Enable the Web Frameworks Experiment:**
-   ```bash
-   firebase experiments:enable webframeworks
-   ```
+### 2. Remove Static Conflicts
+**CRITICAL:** Delete the default `index.html` and `404.html` files from your root directory if they exist. These static files override your dynamic Next.js application.
 
-2. **Deploy the App:**
-   ```bash
-   firebase deploy
-   ```
-   *Note: This command detects the Next.js project in the current directory, builds it, and deploys it to Firebase Hosting and Cloud Functions automatically.*
-
-### Deployment via Firebase App Hosting (Recommended)
-1. Push your code to a GitHub repository.
-2. Connect your repository in the [Firebase Console](https://console.firebase.google.com/) under **App Hosting**.
-3. Firebase will handle every build and deployment automatically on every push to your main branch.
+### 3. Deploy the App
+Run the following command to build and deploy the dynamic backend:
+```bash
+firebase deploy
+```
 
 ## 🛠️ Tech Stack
 - **Framework:** Next.js 15 (App Router)

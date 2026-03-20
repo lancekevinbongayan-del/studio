@@ -6,7 +6,9 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
-      "Libtrack-analytics/**"
+      "Libtrack-analytics/**",
+      "index.html",
+      "404.html"
     ]
   }
 }
