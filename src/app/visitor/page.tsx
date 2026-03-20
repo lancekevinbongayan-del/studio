@@ -39,26 +39,17 @@ export default function VisitorPage() {
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/');
-      return;
     }
   }, [user, isUserLoading, router]);
 
   const handleCheckIn = async (type: 'Library' | 'Dean') => {
     if (!fullName || !email || !department || !reason || (type === 'Dean' && !idNumber)) {
-      toast({
-        variant: "destructive",
-        title: "Validation Incomplete",
-        description: "Please ensure all mandatory fields are populated.",
-      });
+      toast({ variant: "destructive", title: "Information Required", description: "Please ensure all mandatory fields are correctly populated." });
       return;
     }
 
-    if (!email.endsWith('@neu.edu.ph')) {
-      toast({
-        variant: "destructive",
-        title: "Institutional Error",
-        description: "Only @neu.edu.ph accounts are authorized for entry.",
-      });
+    if (!email.toLowerCase().endsWith('@neu.edu.ph')) {
+      toast({ variant: "destructive", title: "Institutional Error", description: "Only verified @neu.edu.ph accounts are authorized for entry." });
       return;
     }
 
@@ -77,48 +68,30 @@ export default function VisitorPage() {
       });
       
       setCheckedIn(true);
-      toast({
-        title: "Entry Logged",
-        description: "Your visit has been successfully registered with OpenShelf.",
-      });
+      toast({ title: "Check-in Successful", description: "Your visit has been officially registered with OpenShelf." });
     } catch (err) {
-      toast({
-        variant: "destructive",
-        title: "Network Error",
-        description: "An error occurred while synchronizing your check-in.",
-      });
+      toast({ variant: "destructive", title: "Submission Failed", description: "A network error occurred while synchronizing your log." });
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleLogout = async () => {
-    if (user) {
-      deleteDoc(doc(db, 'user_sessions', user.uid));
-    }
-    await auth.signOut();
-    router.push('/');
-  };
-
-  if (isUserLoading) return <div className="min-h-screen flex flex-col items-center justify-center space-y-4"><Loader2 className="animate-spin h-10 w-10 text-primary" /><p className="text-sm font-medium">Validating Identity...</p></div>;
+  if (isUserLoading) return <div className="min-h-screen flex flex-col items-center justify-center gap-6"><Loader2 className="animate-spin h-12 w-12 text-primary" /><p className="text-sm font-black tracking-widest uppercase">Validating Identity...</p></div>;
 
   if (checkedIn) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full text-center p-10 space-y-8 animate-in zoom-in-95 duration-500 border-none shadow-2xl">
-          <div className="h-24 w-24 bg-green-500/10 rounded-full flex items-center justify-center mx-auto ring-8 ring-green-500/5">
-            <CheckCircle2 className="h-12 w-12 text-green-600" />
+      <div className="min-h-screen bg-white flex items-center justify-center p-6">
+        <Card className="max-w-xl w-full text-center p-16 space-y-10 animate-in zoom-in-95 duration-500 border-none shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] rounded-[3rem]">
+          <div className="h-32 w-32 bg-green-500/10 rounded-full flex items-center justify-center mx-auto ring-[16px] ring-green-500/5">
+            <CheckCircle2 className="h-16 w-16 text-green-600" />
           </div>
-          <div className="space-y-3">
-            <h2 className="text-3xl font-extrabold font-headline text-primary">Welcome to NEU Library!</h2>
-            <p className="text-muted-foreground leading-relaxed">Your visit to the <strong>{department}</strong> has been officially recorded in the OpenShelf system.</p>
+          <div className="space-y-4">
+            <h2 className="text-4xl font-black font-headline text-primary tracking-tight">Welcome to NEU Library!</h2>
+            <p className="text-slate-500 font-medium text-lg leading-relaxed max-w-sm mx-auto">Your visit to <strong>{department}</strong> has been successfully recorded in the OpenShelf system.</p>
           </div>
-          <div className="pt-4 space-y-4">
-            <Button onClick={() => {
-              setCheckedIn(false);
-              setReason('');
-            }} className="w-full h-14 text-lg rounded-xl shadow-lg">Submit New Log</Button>
-            <Button variant="ghost" onClick={handleLogout} className="w-full h-14 text-muted-foreground font-semibold">Sign Out & Exit</Button>
+          <div className="pt-6 space-y-4">
+            <Button onClick={() => { setCheckedIn(false); setReason(''); }} className="w-full h-16 text-xl font-black rounded-2xl shadow-xl shadow-primary/20 transition-all hover:scale-[1.02]">Log Another Visit</Button>
+            <Button variant="ghost" onClick={() => auth.signOut().then(() => router.push('/'))} className="w-full h-16 text-slate-400 font-black uppercase tracking-widest text-xs">End Session & Sign Out</Button>
           </div>
         </Card>
       </div>
@@ -127,82 +100,82 @@ export default function VisitorPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      <header className="bg-primary text-white p-6 shadow-2xl sticky top-0 z-50">
+      <header className="bg-primary text-white p-8 shadow-2xl sticky top-0 z-50">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <div className="bg-white p-1 rounded-xl shadow-inner">
-              {logo && <Image src={logo.imageUrl} alt="Logo" width={32} height={32} />}
+          <div className="flex items-center gap-6">
+            <div className="bg-white p-1.5 rounded-2xl shadow-inner">
+              {logo && <Image src={logo.imageUrl} alt="Logo" width={36} height={36} />}
             </div>
             <div>
-               <h1 className="text-xl font-extrabold font-headline tracking-tight">OpenShelf <span className="text-accent">Portal</span></h1>
-               <p className="text-[10px] uppercase tracking-widest font-bold opacity-60">Visitor Identification Service</p>
+               <h1 className="text-2xl font-black font-headline tracking-tighter">OpenShelf <span className="text-accent">Portal</span></h1>
+               <p className="text-[10px] uppercase tracking-[0.2em] font-black opacity-50">Identification Management</p>
             </div>
           </div>
-          <Button variant="secondary" size="sm" onClick={handleLogout} className="h-9 px-4 rounded-lg bg-white/10 hover:bg-white/20 border-none text-white">
-            <LogOut className="h-4 w-4 mr-2" /> End Session
+          <Button variant="secondary" size="sm" onClick={() => auth.signOut().then(() => router.push('/'))} className="h-11 px-6 rounded-xl bg-white/10 hover:bg-white/20 border-none text-white font-bold">
+            <LogOut className="h-4 w-4 mr-2" /> Exit Portal
           </Button>
         </div>
       </header>
 
-      <main className="flex-1 max-w-4xl w-full mx-auto p-6 py-12 space-y-12">
-        <div className="text-center space-y-4">
-          <Badge variant="outline" className="px-4 py-1 border-accent text-accent bg-accent/5 font-bold text-[10px] uppercase tracking-widest">Authorized Access Only</Badge>
-          <h2 className="text-4xl font-extrabold text-primary font-headline sm:text-5xl">Digital Check-in</h2>
-          <p className="text-muted-foreground text-lg max-w-xl mx-auto">Please confirm your institutional identity to proceed with your visit logging.</p>
+      <main className="flex-1 max-w-4xl w-full mx-auto p-8 py-16 space-y-16">
+        <div className="text-center space-y-6">
+          <Badge variant="outline" className="px-5 py-1.5 border-accent text-accent bg-accent/5 font-black text-[10px] uppercase tracking-[0.3em] rounded-full">Institutional Identity Verification</Badge>
+          <h2 className="text-5xl font-black text-primary font-headline tracking-tighter sm:text-6xl">Digital Check-in</h2>
+          <p className="text-slate-500 text-xl font-medium max-w-2xl mx-auto leading-relaxed">Please provide your academic credentials to proceed with facility entry.</p>
         </div>
 
-        <Card className="border-none shadow-xl rounded-3xl overflow-hidden bg-white">
-          <div className="h-2 bg-primary" />
-          <CardHeader className="pb-4">
-            <CardTitle className="text-xl font-headline flex items-center gap-3">
-              <div className="bg-primary/5 p-2 rounded-xl text-primary"><User className="h-5 w-5" /></div>
+        <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-white">
+          <div className="h-2.5 bg-primary" />
+          <CardHeader className="p-10 pb-4">
+            <CardTitle className="text-2xl font-black font-headline flex items-center gap-4">
+              <div className="bg-primary/5 p-3 rounded-2xl text-primary"><User className="h-6 w-6" /></div>
               Primary Identification
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-2">
-                <Label htmlFor="fullName" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Legal Full Name</Label>
+          <CardContent className="p-10 pt-6 space-y-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <div className="space-y-3">
+                <Label htmlFor="fullName" className="text-[11px] font-black uppercase tracking-widest text-slate-400">Legal Full Name</Label>
                 <Input 
                   id="fullName" 
-                  placeholder="e.g. Juan A. Dela Cruz" 
+                  placeholder="Juan A. Dela Cruz" 
                   value={fullName} 
                   onChange={e => setFullName(e.target.value)}
-                  className="h-12 rounded-xl bg-slate-50 border-none shadow-inner focus-visible:ring-primary"
+                  className="h-14 rounded-2xl bg-slate-50 border-none shadow-inner focus-visible:ring-2 focus-visible:ring-primary font-bold px-6"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="visitorEmail" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Institutional Email Address</Label>
+              <div className="space-y-3">
+                <Label htmlFor="visitorEmail" className="text-[11px] font-black uppercase tracking-widest text-slate-400">Institutional Email (@neu.edu.ph)</Label>
                 <Input 
                   id="visitorEmail" 
                   type="email" 
                   placeholder="username@neu.edu.ph" 
                   value={email} 
                   onChange={e => setEmail(e.target.value)}
-                  className="h-12 rounded-xl bg-slate-50 border-none shadow-inner focus-visible:ring-primary"
+                  className="h-14 rounded-2xl bg-slate-50 border-none shadow-inner focus-visible:ring-2 focus-visible:ring-primary font-bold px-6"
                 />
               </div>
             </div>
 
-            <div className="space-y-4">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Institutional Role</Label>
+            <div className="space-y-6">
+              <Label className="text-[11px] font-black uppercase tracking-widest text-slate-400">Academic Classification</Label>
               <RadioGroup 
                 defaultValue="student" 
                 value={visitorType} 
                 onValueChange={(v) => setVisitorType(v as 'student' | 'employee')}
-                className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                className="grid grid-cols-1 sm:grid-cols-2 gap-6"
               >
-                <div className={`flex items-center space-x-3 border-2 p-4 rounded-2xl transition-all cursor-pointer ${visitorType === 'student' ? 'border-primary bg-primary/5' : 'border-slate-100'}`}>
+                <div className={`flex items-center space-x-3 border-4 p-6 rounded-[2rem] transition-all cursor-pointer ${visitorType === 'student' ? 'border-primary bg-primary/5' : 'border-slate-50 bg-slate-50'}`}>
                   <RadioGroupItem value="student" id="student" className="hidden" />
-                  <Label htmlFor="student" className="flex items-center gap-3 cursor-pointer font-bold text-primary w-full">
-                    <div className="bg-white p-2 rounded-lg shadow-sm"><GraduationCap className="h-5 w-5" /></div>
+                  <Label htmlFor="student" className="flex items-center gap-4 cursor-pointer font-black text-primary w-full text-lg">
+                    <div className="bg-white p-3 rounded-2xl shadow-md"><GraduationCap className="h-6 w-6" /></div>
                     Current Student
                   </Label>
                 </div>
-                <div className={`flex items-center space-x-3 border-2 p-4 rounded-2xl transition-all cursor-pointer ${visitorType === 'employee' ? 'border-accent bg-accent/5' : 'border-slate-100'}`}>
+                <div className={`flex items-center space-x-3 border-4 p-6 rounded-[2rem] transition-all cursor-pointer ${visitorType === 'employee' ? 'border-accent bg-accent/5' : 'border-slate-50 bg-slate-50'}`}>
                   <RadioGroupItem value="employee" id="employee" className="hidden" />
-                  <Label htmlFor="employee" className="flex items-center gap-3 cursor-pointer font-bold text-accent w-full">
-                    <div className="bg-white p-2 rounded-lg shadow-sm"><Briefcase className="h-5 w-5" /></div>
+                  <Label htmlFor="employee" className="flex items-center gap-4 cursor-pointer font-black text-accent w-full text-lg">
+                    <div className="bg-white p-3 rounded-2xl shadow-md"><Briefcase className="h-6 w-6" /></div>
                     Academic Staff
                   </Label>
                 </div>
@@ -212,76 +185,76 @@ export default function VisitorPage() {
         </Card>
 
         <Tabs defaultValue="library" className="w-full">
-          <TabsList className="grid grid-cols-2 h-16 bg-white border-none p-2 rounded-2xl shadow-lg mb-12">
-            <TabsTrigger value="library" className="text-base font-bold gap-3 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white transition-all">
-              <Library className="h-5 w-5" /> NEU Library
+          <TabsList className="grid grid-cols-2 h-20 bg-white border border-slate-200 p-2.5 rounded-[2.5rem] shadow-xl mb-16">
+            <TabsTrigger value="library" className="text-lg font-black gap-4 rounded-[1.8rem] data-[state=active]:bg-primary data-[state=active]:text-white transition-all">
+              <Library className="h-6 w-6" /> NEU Library
             </TabsTrigger>
-            <TabsTrigger value="dean" className="text-base font-bold gap-3 rounded-xl data-[state=active]:bg-accent data-[state=active]:text-white transition-all">
-              <Building2 className="h-5 w-5" /> Dean's Office
+            <TabsTrigger value="dean" className="text-lg font-black gap-4 rounded-[1.8rem] data-[state=active]:bg-accent data-[state=active]:text-white transition-all">
+              <Building2 className="h-6 w-6" /> Dean's Office
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="library" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <Card className="border-none shadow-2xl rounded-3xl overflow-hidden bg-white">
-              <div className="bg-primary/5 px-8 py-6 flex items-center justify-between border-b">
+          <TabsContent value="library" className="animate-in fade-in slide-in-from-bottom-8 duration-500">
+            <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
+              <div className="bg-primary/5 px-10 py-8 flex items-center justify-between border-b border-primary/10">
                 <div>
-                   <CardTitle className="text-xl font-headline text-primary">Library Log</CardTitle>
-                   <CardDescription className="font-medium">Registration for research, study, or asset use.</CardDescription>
+                   <CardTitle className="text-2xl font-black font-headline text-primary">Library Session</CardTitle>
+                   <CardDescription className="font-bold text-slate-500 mt-1">Research, independent study, or facility usage.</CardDescription>
                 </div>
-                <Sparkles className="h-8 w-8 text-primary/20" />
+                <Sparkles className="h-10 w-10 text-primary/20" />
               </div>
-              <CardContent className="p-8 space-y-8">
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Designated College Department</Label>
+              <CardContent className="p-12 space-y-10">
+                <div className="space-y-3">
+                  <Label className="text-[11px] font-black uppercase tracking-widest text-slate-400">Academic Department</Label>
                   <Select onValueChange={setDepartment} value={department}>
-                    <SelectTrigger className="h-14 rounded-xl bg-slate-50 border-none text-base font-semibold"><SelectValue placeholder="Select Department" /></SelectTrigger>
-                    <SelectContent className="rounded-xl">{DEPARTMENTS.map(d => <SelectItem key={d} value={d} className="rounded-lg">{d}</SelectItem>)}</SelectContent>
+                    <SelectTrigger className="h-16 rounded-2xl bg-slate-50 border-none text-lg font-black px-8 focus:ring-2 focus:ring-primary"><SelectValue placeholder="Select Academic Unit" /></SelectTrigger>
+                    <SelectContent className="rounded-2xl">{DEPARTMENTS.map(d => <SelectItem key={d} value={d} className="rounded-xl font-bold py-3">{d}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Objective of Visit</Label>
+                <div className="space-y-3">
+                  <Label className="text-[11px] font-black uppercase tracking-widest text-slate-400">Objective for Visit</Label>
                   <Select onValueChange={setReason} value={reason}>
-                    <SelectTrigger className="h-14 rounded-xl bg-slate-50 border-none text-base font-semibold"><SelectValue placeholder="Select Objective" /></SelectTrigger>
-                    <SelectContent className="rounded-xl">{VISIT_REASONS_LIBRARY.map(r => <SelectItem key={r} value={r} className="rounded-lg">{r}</SelectItem>)}</SelectContent>
+                    <SelectTrigger className="h-16 rounded-2xl bg-slate-50 border-none text-lg font-black px-8 focus:ring-2 focus:ring-primary"><SelectValue placeholder="Select Primary Objective" /></SelectTrigger>
+                    <SelectContent className="rounded-2xl">{VISIT_REASONS_LIBRARY.map(r => <SelectItem key={r} value={r} className="rounded-xl font-bold py-3">{r}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
-                <Button onClick={() => handleCheckIn('Library')} className="w-full h-16 text-xl font-extrabold rounded-2xl shadow-xl transition-all hover:scale-[1.01] active:scale-100" disabled={submitting}>
-                  {submitting ? <Loader2 className="animate-spin" /> : <>Complete Check-in <ChevronRight className="ml-2 h-6 w-6" /></>}
+                <Button onClick={() => handleCheckIn('Library')} className="w-full h-20 text-2xl font-black rounded-[2rem] shadow-2xl shadow-primary/20 transition-all hover:scale-[1.01]" disabled={submitting}>
+                  {submitting ? <Loader2 className="animate-spin h-8 w-8" /> : <>Log Library Session <ChevronRight className="ml-2 h-8 w-8" /></>}
                 </Button>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="dean" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <Card className="border-none shadow-2xl rounded-3xl overflow-hidden bg-white">
-              <div className="bg-accent/5 px-8 py-6 flex items-center justify-between border-b">
+          <TabsContent value="dean" className="animate-in fade-in slide-in-from-bottom-8 duration-500">
+            <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
+              <div className="bg-accent/5 px-10 py-8 flex items-center justify-between border-b border-accent/10">
                 <div>
-                   <CardTitle className="text-xl font-headline text-accent">Office Appointment</CardTitle>
-                   <CardDescription className="font-medium text-slate-600">Administrative inquiries and dean consultations.</CardDescription>
+                   <CardTitle className="text-2xl font-black font-headline text-accent">Office Appointment</CardTitle>
+                   <CardDescription className="font-bold text-slate-500 mt-1">Consultations and administrative inquiries.</CardDescription>
                 </div>
-                <Building2 className="h-8 w-8 text-accent/20" />
+                <Building2 className="h-10 w-10 text-accent/20" />
               </div>
-              <CardContent className="p-8 space-y-8">
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{visitorType === 'student' ? 'Student Registration Number' : 'Employee ID Number'}</Label>
-                  <Input placeholder="20XX-XXXXX" value={idNumber} onChange={e => setIdNumber(e.target.value)} className="h-14 rounded-xl bg-slate-50 border-none font-mono text-lg shadow-inner" />
+              <CardContent className="p-12 space-y-10">
+                <div className="space-y-3">
+                  <Label className="text-[11px] font-black uppercase tracking-widest text-slate-400">{visitorType === 'student' ? 'Student Registration Number' : 'Employee Identification'}</Label>
+                  <Input placeholder="20XX-XXXXX" value={idNumber} onChange={e => setIdNumber(e.target.value)} className="h-16 rounded-2xl bg-slate-50 border-none font-black text-xl px-8 shadow-inner tracking-widest" />
                 </div>
-                <div className="space-y-2">
-                   <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Designated College Department</Label>
+                <div className="space-y-3">
+                   <Label className="text-[11px] font-black uppercase tracking-widest text-slate-400">Academic Department</Label>
                   <Select onValueChange={setDepartment} value={department}>
-                    <SelectTrigger className="h-14 rounded-xl bg-slate-50 border-none text-base font-semibold"><SelectValue placeholder="Select Department" /></SelectTrigger>
-                    <SelectContent className="rounded-xl">{DEPARTMENTS.map(d => <SelectItem key={d} value={d} className="rounded-lg">{d}</SelectItem>)}</SelectContent>
+                    <SelectTrigger className="h-16 rounded-2xl bg-slate-50 border-none text-lg font-black px-8 focus:ring-2 focus:ring-accent"><SelectValue placeholder="Select Academic Unit" /></SelectTrigger>
+                    <SelectContent className="rounded-2xl">{DEPARTMENTS.map(d => <SelectItem key={d} value={d} className="rounded-xl font-bold py-3">{d}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Nature of Consultation</Label>
+                <div className="space-y-3">
+                  <Label className="text-[11px] font-black uppercase tracking-widest text-slate-400">Consultation Nature</Label>
                   <Select onValueChange={setReason} value={reason}>
-                    <SelectTrigger className="h-14 rounded-xl bg-slate-50 border-none text-base font-semibold"><SelectValue placeholder="Select Purpose" /></SelectTrigger>
-                    <SelectContent className="rounded-xl">{VISIT_REASONS_DEAN.map(r => <SelectItem key={r} value={r} className="rounded-lg">{r}</SelectItem>)}</SelectContent>
+                    <SelectTrigger className="h-16 rounded-2xl bg-slate-50 border-none text-lg font-black px-8 focus:ring-2 focus:ring-accent"><SelectValue placeholder="Select Consultation Purpose" /></SelectTrigger>
+                    <SelectContent className="rounded-2xl">{VISIT_REASONS_DEAN.map(r => <SelectItem key={r} value={r} className="rounded-xl font-bold py-3">{r}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
-                <Button onClick={() => handleCheckIn('Dean')} className="w-full h-16 text-xl font-extrabold bg-accent hover:bg-accent/90 text-white rounded-2xl shadow-xl transition-all hover:scale-[1.01] active:scale-100" disabled={submitting}>
-                  {submitting ? <Loader2 className="animate-spin" /> : <>Request Consultation <ChevronRight className="ml-2 h-6 w-6" /></>}
+                <Button onClick={() => handleCheckIn('Dean')} className="w-full h-20 text-2xl font-black bg-accent hover:bg-accent/90 text-white rounded-[2rem] shadow-2xl shadow-accent/20 transition-all hover:scale-[1.01]" disabled={submitting}>
+                  {submitting ? <Loader2 className="animate-spin h-8 w-8" /> : <>Request Appointment <ChevronRight className="ml-2 h-8 w-8" /></>}
                 </Button>
               </CardContent>
             </Card>
