@@ -8,19 +8,19 @@ The application is hosted at: **[https://studio-8706353121-4d298.web.app](https:
 
 ## 🚀 Deployment Guide (IMPORTANT)
 
-If you see the "Firebase Hosting Setup Complete" default page instead of the app, follow these steps:
+If you see the "Firebase Hosting Setup Complete" default page instead of the app, follow these **CRITICAL** steps in your terminal:
 
 ### 1. Enable Web Frameworks
-Ensure your CLI supports dynamic Next.js building:
+This allows Firebase to build your Next.js project dynamically:
 ```bash
 firebase experiments:enable webframeworks
 ```
 
-### 2. Remove Static Conflicts
-**CRITICAL:** Delete the default `index.html` and `404.html` files from your root directory if they exist. These static files override your dynamic Next.js application.
+### 2. Delete Static Placeholders
+**IMPORTANT:** Delete any files named `index.html` or `404.html` in your root directory or the `Libtrack-analytics` folder. These static files block your dynamic app from loading.
 
 ### 3. Deploy the App
-Run the following command to build and deploy the dynamic backend:
+Run the following command to rebuild and deploy the dynamic backend:
 ```bash
 firebase deploy
 ```
