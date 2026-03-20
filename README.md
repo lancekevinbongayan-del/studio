@@ -1,7 +1,11 @@
 [![Live Demo](https://img.shields.io/badge/demo-live_preview-blue?style=for-the-badge&logo=firebase)](https://studio-8706353121-4d298.web.app)
+
 # OpenShelf Analytics
 
 A professional visitor management and facility analytics system for New Era University.
+
+## 🌐 Live Application
+The application is hosted at: **[https://studio-8706353121-4d298.web.app](https://studio-8706353121-4d298.web.app)**
 
 ## 🚀 Deployment Guide
 
