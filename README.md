@@ -1,30 +1,27 @@
 
 # OpenShelf Analytics
 
-A QR-based library and academic office visitor management system for New Era University.
+A professional visitor management and facility analytics system for New Era University.
 
-## 📜 Description
-OpenShelf Analytics is a comprehensive visitor management system focusing on institutional authentication, role-based dashboards, and real-time usage statistics. It streamlines the check-in process for students while providing administrators with AI-powered insights into facility usage.
+## 🚀 Deployment Guide
 
-## 🚀 Key Features
-- **Institutional Authentication:** Secure login restricted to `@neu.edu.ph` domains using Firebase Auth.
-- **Quick Visitor Check-in:** Anonymous, password-free check-in flow for students and faculty.
-- **Real-time Statistics Dashboard:** Live monitoring of active sessions and visitor volume using Firestore `onSnapshot`.
-- **Dean's Office Queue:** Real-time waiting room management for academic appointments.
-- **User Management:** Administrative control to block or restrict user access.
-- **AI Summary Reports:** LLM-powered analytics (via Genkit) to identify peak hours and common visit reasons.
+This project is built for **Firebase App Hosting**. This is the modern way to deploy Next.js apps with Genkit AI features.
 
-## 🛠️ Technologies Used
-- **Language:** TypeScript
-- **Framework:** Next.js (App Router)
-- **Library:** React
-- **UI Components:** ShadCN UI (Radix UI)
-- **Styling:** Tailwind CSS
-- **Icons:** Lucide React
-- **Backend/Database:** Firebase Firestore
-- **Authentication:** Firebase Auth
-- **AI Integration:** Firebase Genkit with Google Generative AI
-- **Hosting:** Firebase App Hosting
+### Automated Deployment (Recommended)
+1. Push your code to a GitHub repository.
+2. Go to the [Firebase Console](https://console.firebase.google.com/).
+3. Create an **App Hosting** backend and connect your GitHub repo.
+4. Firebase will automatically build and deploy your app on every push.
 
-## 🌐 Deployment
-This project is configured for **Firebase App Hosting**, which automatically handles dynamic Next.js features and Genkit AI integration. Simply push to your repository to trigger a build.
+### CLI Configuration
+The `firebase.json` is configured for **Web Frameworks**. If you choose to deploy via CLI, ensure you have the experiment enabled:
+```bash
+firebase experiments:enable webframeworks
+firebase deploy
+```
+
+## 🛠️ Tech Stack
+- **Framework:** Next.js 15 (App Router)
+- **AI:** Genkit (Google Gemini 1.5 Flash)
+- **Database/Auth:** Firebase Firestore & Firebase Auth
+- **UI:** Tailwind CSS & ShadCN Components

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -12,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth, useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, updateDoc, deleteDoc, query, orderBy, limit } from 'firebase/firestore';
+import { collection, doc, deleteDoc, query, orderBy, limit } from 'firebase/firestore';
 import { generateSummaryReport } from '@/ai/flows/generate-summary-report';
 import { 
   Search, 
@@ -21,10 +22,7 @@ import {
   LogOut,
   Sparkles,
   Loader2,
-  Smartphone,
-  Monitor,
   Activity,
-  User,
   Filter,
   X,
   GraduationCap,
@@ -33,7 +31,8 @@ import {
   BrainCircuit,
   CalendarCheck,
   BarChart3,
-  Building2
+  Building2,
+  ChevronRight
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -62,11 +61,6 @@ export default function AdminDashboard() {
   }, [db]);
   const { data: visitsData, isLoading: visitsLoading } = useCollection(visitsQuery);
 
-  const usersQuery = useMemoFirebase(() => {
-    return collection(db, 'users');
-  }, [db]);
-  const { data: usersData } = useCollection(usersQuery);
-
   const sessionsQuery = useMemoFirebase(() => {
     return collection(db, 'user_sessions');
   }, [db]);
@@ -79,7 +73,6 @@ export default function AdminDashboard() {
   }, [user, isUserLoading, router]);
 
   const allVisits = visitsData || [];
-  const users = usersData || [];
   const sessions = sessionsData || [];
 
   const filteredVisits = useMemo(() => {
@@ -118,13 +111,13 @@ export default function AdminDashboard() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center space-y-6">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="text-sm font-bold tracking-widest text-primary uppercase animate-pulse">Establishing OpenShelf Connection...</p>
+        <p className="text-sm font-black tracking-widest text-primary uppercase animate-pulse">Establishing OpenShelf Connection...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-body">
       <header className="bg-white border-b sticky top-0 z-50 px-8 py-5">
         <div className="max-w-[1600px] mx-auto flex justify-between items-center">
           <div className="flex items-center gap-5">
@@ -141,7 +134,7 @@ export default function AdminDashboard() {
               <p className="text-sm font-black text-primary">{user?.email}</p>
               <Badge variant="outline" className="text-[9px] h-5 border-accent text-accent bg-accent/5 font-black uppercase tracking-tighter">System Administrator</Badge>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="font-bold text-slate-500 hover:text-destructive">
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="font-bold text-slate-500 hover:text-destructive transition-colors">
               <LogOut className="h-4 w-4 mr-2" /> Sign Out
             </Button>
           </div>
@@ -149,8 +142,9 @@ export default function AdminDashboard() {
       </header>
 
       <main className="flex-1 max-w-[1600px] w-full mx-auto p-8 space-y-10">
+        {/* KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          <Card className="relative overflow-hidden group border-none shadow-sm bg-white hover:shadow-xl transition-all">
+          <Card className="relative overflow-hidden group border-none shadow-sm bg-white hover:shadow-xl transition-all duration-300">
             <CardContent className="pt-8 px-8 pb-8">
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
@@ -167,7 +161,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
           
-          <Card className="relative overflow-hidden group border-none shadow-sm bg-white hover:shadow-xl transition-all">
+          <Card className="relative overflow-hidden group border-none shadow-sm bg-white hover:shadow-xl transition-all duration-300">
             <CardContent className="pt-8 px-8 pb-8">
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
@@ -185,7 +179,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="relative overflow-hidden group border-none shadow-sm bg-white hover:shadow-xl transition-all">
+          <Card className="relative overflow-hidden group border-none shadow-sm bg-white hover:shadow-xl transition-all duration-300">
             <CardContent className="pt-8 px-8 pb-8">
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
@@ -204,7 +198,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="relative overflow-hidden group border-none shadow-sm bg-white hover:shadow-xl transition-all">
+          <Card className="relative overflow-hidden group border-none shadow-sm bg-white hover:shadow-xl transition-all duration-300">
             <CardContent className="pt-8 px-8 pb-8">
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
@@ -220,19 +214,17 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
+        {/* Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
           <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
             <TabsList className="bg-white border p-1.5 rounded-2xl shadow-sm h-auto flex flex-wrap">
-              <TabsTrigger value="stats" className="rounded-xl px-6 py-3 font-bold data-[state=active]:bg-primary data-[state=active]:text-white">
+              <TabsTrigger value="stats" className="rounded-xl px-6 py-3 font-bold data-[state=active]:bg-primary data-[state=active]:text-white transition-all">
                 <LayoutDashboard className="h-4 w-4 mr-2" /> Live Monitor
               </TabsTrigger>
-              <TabsTrigger value="dean-view" className="rounded-xl px-6 py-3 font-bold data-[state=active]:bg-primary data-[state=active]:text-white">
+              <TabsTrigger value="dean-view" className="rounded-xl px-6 py-3 font-bold data-[state=active]:bg-primary data-[state=active]:text-white transition-all">
                 <GraduationCap className="h-4 w-4 mr-2" /> Dean's Queue
               </TabsTrigger>
-              <TabsTrigger value="users" className="rounded-xl px-6 py-3 font-bold data-[state=active]:bg-primary data-[state=active]:text-white">
-                <Users className="h-4 w-4 mr-2" /> Staff Registry
-              </TabsTrigger>
-              <TabsTrigger value="reports" className="rounded-xl px-6 py-3 font-bold data-[state=active]:bg-primary data-[state=active]:text-white">
+              <TabsTrigger value="reports" className="rounded-xl px-6 py-3 font-bold data-[state=active]:bg-primary data-[state=active]:text-white transition-all">
                 <BrainCircuit className="h-4 w-4 mr-2" /> AI Synthesis
               </TabsTrigger>
             </TabsList>
@@ -242,7 +234,7 @@ export default function AdminDashboard() {
                 <Search className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
                 <Input 
                   placeholder="Search visitor registry..." 
-                  className="pl-11 h-12 rounded-2xl bg-white border-none shadow-sm font-medium"
+                  className="pl-11 h-12 rounded-2xl bg-white border-none shadow-sm font-medium focus-visible:ring-primary"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -279,7 +271,7 @@ export default function AdminDashboard() {
                     <SelectItem value="employee">Staff & Faculty</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button variant="ghost" size="sm" onClick={() => { setFilterReason('all'); setFilterCollege('all'); setFilterVisitorType('all'); setSearchTerm(''); }} className="ml-auto font-black text-[10px] uppercase tracking-widest hover:text-primary">
+                <Button variant="ghost" size="sm" onClick={() => { setFilterReason('all'); setFilterCollege('all'); setFilterVisitorType('all'); setSearchTerm(''); }} className="ml-auto font-black text-[10px] uppercase tracking-widest hover:text-primary transition-colors">
                   <X className="h-3 w-3 mr-1" /> Reset All
                 </Button>
               </div>
@@ -322,7 +314,10 @@ export default function AdminDashboard() {
                           <span className="bg-slate-100 px-3 py-1.5 rounded-xl font-black text-[10px] text-slate-700 uppercase tracking-tighter">{visit.reason}</span>
                         </TableCell>
                         <TableCell className="text-right px-8">
-                           <Badge variant="outline" className="text-[10px] uppercase font-black border-slate-200">
+                           <Badge className={cn(
+                             "capitalize font-bold text-[9px] px-3",
+                             visit.status === 'completed' ? "bg-green-500" : visit.status === 'in-meeting' ? "bg-accent" : "bg-primary"
+                           )}>
                             {visit.status || 'waiting'}
                           </Badge>
                         </TableCell>
@@ -346,7 +341,7 @@ export default function AdminDashboard() {
 
           <TabsContent value="reports" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <Card className="shadow-2xl border-none overflow-hidden rounded-[2.5rem]">
-              <CardHeader className="flex flex-row items-center justify-between bg-primary text-white p-12">
+              <CardHeader className="flex flex-col md:flex-row items-center justify-between bg-primary text-white p-12 gap-8">
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="bg-accent p-2 rounded-xl"><Sparkles className="h-6 w-6 text-white" /></div>
@@ -364,7 +359,7 @@ export default function AdminDashboard() {
                   } catch {
                     toast({ variant: "destructive", title: "Synthesis Error", description: "The intelligence engine is currently recalibrating." });
                   } finally { setGeneratingReport(false); }
-                }} disabled={generatingReport} className="bg-accent text-white hover:bg-accent/90 shadow-2xl h-16 px-10 rounded-2xl text-lg font-black tracking-tight">
+                }} disabled={generatingReport} className="bg-accent text-white hover:bg-accent/90 shadow-2xl h-16 px-10 rounded-2xl text-lg font-black tracking-tight w-full md:w-auto transition-transform active:scale-95">
                   {generatingReport ? <Loader2 className="h-6 w-6 animate-spin mr-3" /> : <BrainCircuit className="h-6 w-6 mr-3" />}
                   Synthesize Analysis
                 </Button>
