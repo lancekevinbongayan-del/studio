@@ -1,3 +1,4 @@
+
 # OpenShelf Analytics
 
 A QR-based library and academic office visitor management system for New Era University.
@@ -24,9 +25,6 @@ OpenShelf Analytics is a comprehensive visitor management system focusing on ins
 - **Authentication:** Firebase Auth
 - **AI Integration:** Firebase Genkit with Google Generative AI
 - **Hosting:** Firebase App Hosting
-## 🌐 Live Demo
 
-You can view the deployed application here:
-**[View Live App](https://studio-8706353121-4d298.web.app)**# My Awesome Project
-
-[![Live Demo](https://img.shields.io/badge/demo-live-green?style=for-the-badge&logo=firebase)](https://studio-8706353121-4d298.web.app)
+## 🌐 Deployment
+This project is configured for **Firebase App Hosting**, which automatically handles dynamic Next.js features and Genkit AI integration. Simply push to your repository to trigger a build.

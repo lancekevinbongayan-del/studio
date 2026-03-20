@@ -1,14 +1,15 @@
+
 {
   "auth": {
     "providers": {
       "googleSignIn": {
-        "oAuthBrandDisplayName": "n",
-        "supportEmail": "n"
+        "oAuthBrandDisplayName": "OpenShelf Analytics",
+        "supportEmail": "support@neu.edu.ph"
       }
     }
   },
   "hosting": {
-    "public": "out",
+    "source": ".",
     "ignore": [
       "firebase.json",
       "**/.*",
