@@ -58,7 +58,7 @@ export default function Home() {
               />
             )}
           </div>
-          <h1 className="mb-6 text-5xl font-extrabold tracking-tight text-white sm:text-7xl font-headline">
+          <h1 className="mb-6 text-5xl font-black tracking-tight text-white sm:text-7xl font-headline">
             OpenShelf <span className="text-accent">Analytics</span>
           </h1>
           <p className="mx-auto max-w-2xl text-lg text-primary-foreground/70 sm:text-xl font-medium leading-relaxed">
@@ -77,10 +77,10 @@ export default function Home() {
               <div className="h-16 w-16 rounded-2xl bg-accent/10 flex items-center justify-center transition-transform group-hover:rotate-6">
                 <GraduationCap className="h-8 w-8 text-accent" />
               </div>
-              <div className="min-h-[80px]">
+              <div className="min-h-[100px]">
                 <CardTitle className="text-3xl font-headline text-primary font-black">Visitor Portal</CardTitle>
                 <CardDescription className="text-base font-medium mt-2 leading-relaxed">
-                  Rapid check-in for the Library and Dean's Office services.
+                  Rapid check-in for the Library and Dean's Office services. Secure and institutionalized entry.
                 </CardDescription>
               </div>
             </CardHeader>
@@ -88,7 +88,7 @@ export default function Home() {
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <div className="mt-1.5 h-2 w-2 rounded-full bg-accent shrink-0" />
-                  <p className="text-sm text-slate-600 font-semibold leading-relaxed">Secure, anonymous entry with institutional email verification.</p>
+                  <p className="text-sm text-slate-600 font-semibold leading-relaxed">Secure entry with institutional email verification.</p>
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="mt-1.5 h-2 w-2 rounded-full bg-accent shrink-0" />
@@ -110,10 +110,10 @@ export default function Home() {
               <div className="h-16 w-16 rounded-2xl bg-white/10 flex items-center justify-center transition-transform group-hover:-rotate-6">
                 <ShieldCheck className="h-8 w-8 text-accent" />
               </div>
-              <div className="min-h-[80px]">
+              <div className="min-h-[100px]">
                 <CardTitle className="text-3xl font-headline text-white font-black">Administration</CardTitle>
                 <CardDescription className="text-base font-medium mt-2 text-primary-foreground/60 leading-relaxed">
-                  Oversight tools for department deans and library staff.
+                  Oversight tools for department deans and library staff. Comprehensive facility management.
                 </CardDescription>
               </div>
             </CardHeader>

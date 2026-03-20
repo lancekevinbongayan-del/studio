@@ -5,18 +5,21 @@ A professional visitor management and facility analytics system for New Era Univ
 
 ## 🚀 Deployment Guide
 
-This project is built for **Firebase App Hosting**. This is the modern way to deploy Next.js apps with Genkit AI features.
+This project is built for **Firebase App Hosting** (Recommended) or **Firebase Hosting (Web Frameworks)**.
 
-### Automated Deployment (Recommended)
+### Path A: Firebase App Hosting (Automated)
 1. Push your code to a GitHub repository.
 2. Go to the [Firebase Console](https://console.firebase.google.com/).
 3. Create an **App Hosting** backend and connect your GitHub repo.
 4. Firebase will automatically build and deploy your app on every push.
 
-### CLI Configuration
-The `firebase.json` is configured for **Web Frameworks**. If you choose to deploy via CLI, ensure you have the experiment enabled:
+### Path B: Firebase CLI Deployment
+If you prefer deploying via the terminal, you **must** enable the webframeworks experiment:
 ```bash
+# 1. Enable the required experiment
 firebase experiments:enable webframeworks
+
+# 2. Deploy the application
 firebase deploy
 ```
 
