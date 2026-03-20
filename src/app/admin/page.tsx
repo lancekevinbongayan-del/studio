@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -25,13 +24,10 @@ import {
   Activity,
   Filter,
   X,
-  GraduationCap,
   LayoutDashboard,
   BrainCircuit,
   CalendarCheck,
-  BarChart3,
-  Building2,
-  ChevronRight
+  BarChart3
 } from 'lucide-react';
 import { format, isValid } from 'date-fns';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -55,25 +51,29 @@ export default function AdminDashboard() {
   const [report, setReport] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('stats');
 
-  const logo = PlaceHolderImages.find(img => img.id === 'neu-logo');
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted && !isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router, mounted]);
 
   const visitsQuery = useMemoFirebase(() => {
+    if (!db) return null;
     return query(collection(db, 'visits'), orderBy('checkInTime', 'desc'), limit(100));
   }, [db]);
   const { data: visitsData, isLoading: visitsLoading } = useCollection(visitsQuery);
 
   const sessionsQuery = useMemoFirebase(() => {
+    if (!db) return null;
     return collection(db, 'user_sessions');
   }, [db]);
   const { data: sessionsData } = useCollection(sessionsQuery);
 
-  useEffect(() => {
-    setMounted(true);
-    if (!isUserLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, isUserLoading, router]);
-
+  const logo = PlaceHolderImages.find(img => img.id === 'neu-logo');
   const allVisits = visitsData || [];
   const sessions = sessionsData || [];
 
@@ -89,7 +89,6 @@ export default function AdminDashboard() {
   }, [allVisits, filterReason, filterCollege, filterVisitorType, searchTerm]);
 
   const stats = useMemo(() => {
-    if (!mounted) return { total: 0, active: 0, day: 0 };
     return {
       total: filteredVisits.length,
       active: sessions.length,
@@ -99,16 +98,16 @@ export default function AdminDashboard() {
         return isValid(visitDate) && visitDate.toDateString() === new Date().toDateString();
       }).length,
     };
-  }, [filteredVisits, sessions.length, mounted]);
+  }, [filteredVisits, sessions.length]);
 
   const allReasons = Array.from(new Set([...VISIT_REASONS_LIBRARY, ...VISIT_REASONS_DEAN]));
 
   const handleLogout = async () => {
-    if (user) {
+    if (user && db && auth) {
       await deleteDoc(doc(db, 'user_sessions', user.uid)).catch(() => {});
+      await auth.signOut();
+      router.push('/');
     }
-    await auth.signOut();
-    router.push('/');
   };
 
   const safeFormatDate = (dateStr: string | undefined) => {
@@ -117,7 +116,7 @@ export default function AdminDashboard() {
     return isValid(d) ? format(d, 'MMM d, HH:mm') : '—';
   };
 
-  if (!mounted || isUserLoading || visitsLoading) {
+  if (!mounted || isUserLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center space-y-6">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -152,7 +151,6 @@ export default function AdminDashboard() {
       </header>
 
       <main className="flex-1 max-w-[1600px] w-full mx-auto p-8 space-y-10">
-        {/* KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <Card className="relative overflow-hidden group border-none shadow-sm bg-white hover:shadow-xl transition-all duration-300">
             <CardContent className="pt-8 px-8 pb-8">
@@ -224,7 +222,6 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
-        {/* Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
           <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
             <TabsList className="bg-white border p-1.5 rounded-2xl shadow-sm h-auto flex flex-wrap">

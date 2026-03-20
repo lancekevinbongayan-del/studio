@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -17,6 +16,7 @@ export default function Home() {
   const auth = useAuth();
   const [mounted, setMounted] = useState(false);
   const [currentYear, setCurrentYear] = useState('');
+  
   const logo = PlaceHolderImages.find(img => img.id === 'neu-logo');
 
   useEffect(() => {
@@ -25,11 +25,14 @@ export default function Home() {
   }, []);
 
   const handleVisitorPortalAccess = () => {
-    initiateAnonymousSignIn(auth);
-    router.push('/visitor');
+    if (auth) {
+      initiateAnonymousSignIn(auth);
+      router.push('/visitor');
+    }
   };
 
-  if (!mounted) return null;
+  // SSR safety: return basic structure or skeleton while mounting
+  if (!mounted) return <div className="min-h-screen bg-white" />;
 
   return (
     <div className="min-h-screen bg-white flex flex-col font-body">
@@ -55,6 +58,7 @@ export default function Home() {
                 width={100} 
                 height={100} 
                 className="object-contain"
+                priority
               />
             )}
           </div>
@@ -144,7 +148,7 @@ export default function Home() {
         <div className="container mx-auto px-4 text-center space-y-6">
           <p className="font-black text-primary tracking-tight text-xl">OpenShelf <span className="text-accent">Analytics</span></p>
           <div className="text-sm text-slate-500 font-semibold uppercase tracking-widest">
-            © {currentYear} New Era University. All Rights Reserved.
+            © {currentYear || '2025'} New Era University. All Rights Reserved.
           </div>
           <p className="text-[10px] uppercase tracking-[0.4em] font-black text-slate-400">
             Authorized Institutional Access Only
