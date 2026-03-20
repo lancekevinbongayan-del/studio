@@ -1,19 +1,12 @@
 
 {
-  "auth": {
-    "providers": {
-      "googleSignIn": {
-        "oAuthBrandDisplayName": "OpenShelf Analytics",
-        "supportEmail": "support@neu.edu.ph"
-      }
-    }
-  },
   "hosting": {
     "source": ".",
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "Libtrack-analytics/**"
     ],
     "frameworksBackend": {
       "region": "us-central1"
